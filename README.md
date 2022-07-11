@@ -1,0 +1,3 @@
+# Nagios Read Component
+
+## Install
