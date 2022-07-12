@@ -1,9 +1,15 @@
-import { foo } from "./foo";
+// Initialises the project-wide logger
 import { logger } from "./logger";
+import { parse_nagios_status_file } from "./parse_nagios_status_dat";
+import fs from "fs";
 
-function app() {
+async function app() {
+  const stream = fs.createReadStream(`${__dirname}/../package.json`);
+  let status_iter = parse_nagios_status_file(stream);
+  for await (let status of status_iter) {
+    logger.info(status);
+  }
   logger.info("Hello World");
-  foo();
 }
 
-app();
+app().then(() => {});

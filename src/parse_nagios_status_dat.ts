@@ -1,0 +1,47 @@
+import {ReadStream} from "fs";
+import NagiosStatusInfo from "./nagios/status_file_info";
+import NagiosProgramStatus from "./nagios/nagios_program_status";
+import HostStatus from "./nagios/host_status";
+import ServiceStatus from "./nagios/service_status";
+
+
+
+export type NagiosStatus =
+  {type: "Info", status: NagiosStatusInfo}
+  | {type: "ProgramStatus", status: NagiosProgramStatus}
+  | {type: "HostStatus", status: HostStatus}
+  | {type: "ServiceStatus", status: ServiceStatus};
+
+// Will produce an iterator (via a generator) over a nagios status.dat file stream
+// which converts the status.dat file into usable status objects.
+//
+// Nagios will never write to the file after it has been created, the process
+// that nagios uses is:
+//    (1) Create a temporary file
+//    (2) Write the status to the temporary file
+//    (3) Move the temporary file to the status.dat file
+//        (i.e. The path pointing to status.dat now points instead at this
+//        temporary file; which is no longer temporary)
+//
+// This means that the old status.dat file, once opened for reading, will remain
+// open (and unchanged) for the duration that this code needs it for. It is just
+// that the file cannot easily be opened by another process as it no longer
+// has a path pointing to it.
+//
+// Which means that we can continue using a file stream over the file, as nagios
+// will not change the file's contents while we're reading it
+export async function* parse_nagios_status_file(status_file: ReadStream): AsyncGenerator<NagiosStatus> {
+  for (let i=0;i<5;i++) {
+    yield {
+      type: "Info",
+      status: {
+        created: 1,
+        version: "v1",
+        last_update_check: 1,
+        update_available: true,
+        last_version: "v1",
+        new_version: "",
+      }
+    };
+  }
+}
