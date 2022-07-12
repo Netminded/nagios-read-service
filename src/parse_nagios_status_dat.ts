@@ -4,7 +4,7 @@ import * as readline from 'readline';
 import NagiosStatusInfo, { parse_info_block } from './nagios/status_file_info';
 import NagiosProgramStatus from './nagios/nagios_program_status';
 import HostStatus, { parse_host_status } from './nagios/host_status';
-import ServiceStatus from './nagios/service_status';
+import ServiceStatus, { parse_service_status } from './nagios/service_status';
 
 import { logger } from './logger';
 
@@ -49,6 +49,10 @@ export async function* parse_nagios_status_file(
         yield { type: 'HostStatus', status: await parse_host_status(iterator) };
         break;
       case 'servicestatus {':
+        yield {
+          type: 'ServiceStatus',
+          status: await parse_service_status(iterator),
+        };
         break;
       case 'contactstatus {':
         break;
