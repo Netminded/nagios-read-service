@@ -1,8 +1,12 @@
 import {ReadStream} from "fs";
+import * as readline from "readline";
+
 import NagiosStatusInfo from "./nagios/status_file_info";
 import NagiosProgramStatus from "./nagios/nagios_program_status";
 import HostStatus from "./nagios/host_status";
 import ServiceStatus from "./nagios/service_status";
+
+import { logger } from "./logger";
 
 
 
@@ -30,18 +34,33 @@ export type NagiosStatus =
 //
 // Which means that we can continue using a file stream over the file, as nagios
 // will not change the file's contents while we're reading it
-export async function* parse_nagios_status_file(status_file: ReadStream): AsyncGenerator<NagiosStatus> {
-  for (let i=0;i<5;i++) {
-    yield {
-      type: "Info",
-      status: {
-        created: 1,
-        version: "v1",
-        last_update_check: 1,
-        update_available: true,
-        last_version: "v1",
-        new_version: "",
-      }
-    };
+export async function* parse_nagios_status_file(status_file: ReadStream): AsyncGenerator<NagiosStatus | null> {
+  let rl = readline.createInterface(status_file);
+  for await (const line of rl) {
+    switch (line.trim()) {
+      case "info {":
+        break;
+      case "programstatus {":
+        break;
+      case "hoststatus {":
+        break;
+      case "servicestatus {":
+        break;
+      case "contactstatus {":
+        break;
+      case "hostcomment {":
+        break;
+      case "servicecomment {":
+        break;
+      case "hostdowntime {":
+        break;
+      case "servicedowntime {":
+        break;
+      case "":
+        break;
+      default:
+        logger.warn({line: line}, "Received unexpected line in `status.dat` file; ignoring it and continuing on as normal")
+    }
+    yield null;
   }
 }
