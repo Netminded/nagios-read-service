@@ -1,20 +1,18 @@
-import {ReadStream} from "fs";
-import * as readline from "readline";
+import { ReadStream } from 'fs';
+import * as readline from 'readline';
 
-import NagiosStatusInfo, { parse_info_block } from "./nagios/status_file_info";
-import NagiosProgramStatus from "./nagios/nagios_program_status";
-import HostStatus from "./nagios/host_status";
-import ServiceStatus from "./nagios/service_status";
+import NagiosStatusInfo, { parse_info_block } from './nagios/status_file_info';
+import NagiosProgramStatus from './nagios/nagios_program_status';
+import HostStatus, { parse_host_status } from './nagios/host_status';
+import ServiceStatus from './nagios/service_status';
 
-import { logger } from "./logger";
-
-
+import { logger } from './logger';
 
 export type NagiosStatus =
-  {type: "Info", status: NagiosStatusInfo}
-  | {type: "ProgramStatus", status: NagiosProgramStatus}
-  | {type: "HostStatus", status: HostStatus}
-  | {type: "ServiceStatus", status: ServiceStatus};
+  | { type: 'Info'; status: NagiosStatusInfo }
+  | { type: 'ProgramStatus'; status: NagiosProgramStatus }
+  | { type: 'HostStatus'; status: HostStatus }
+  | { type: 'ServiceStatus'; status: ServiceStatus };
 
 // Will produce an iterator (via a generator) over a nagios status.dat file stream
 // which converts the status.dat file into usable status objects.
@@ -34,35 +32,41 @@ export type NagiosStatus =
 //
 // Which means that we can continue using a file stream over the file, as nagios
 // will not change the file's contents while we're reading it
-export async function* parse_nagios_status_file(status_file: ReadStream): AsyncGenerator<NagiosStatus | null> {
+export async function* parse_nagios_status_file(
+  status_file: ReadStream
+): AsyncGenerator<NagiosStatus | null> {
   let rl = readline.createInterface(status_file);
   const iterator = rl[Symbol.asyncIterator]();
   // Parses the file
   for await (const line of iterator) {
     switch (line.trim()) {
-      case "info {":
-        yield { type: "Info", status: await parse_info_block(iterator) };
+      case 'info {':
+        yield { type: 'Info', status: await parse_info_block(iterator) };
         break;
-      case "programstatus {":
+      case 'programstatus {':
         break;
-      case "hoststatus {":
+      case 'hoststatus {':
+        yield { type: 'HostStatus', status: await parse_host_status(iterator) };
         break;
-      case "servicestatus {":
+      case 'servicestatus {':
         break;
-      case "contactstatus {":
+      case 'contactstatus {':
         break;
-      case "hostcomment {":
+      case 'hostcomment {':
         break;
-      case "servicecomment {":
+      case 'servicecomment {':
         break;
-      case "hostdowntime {":
+      case 'hostdowntime {':
         break;
-      case "servicedowntime {":
+      case 'servicedowntime {':
         break;
-      case "":
+      case '':
         break;
       default:
-        logger.warn({ line: line }, "Received unexpected line in `status.dat` file; ignoring it and continuing on as normal")
+        logger.warn(
+          { line: line },
+          'Received unexpected line in `status.dat` file; ignoring it and continuing on as normal'
+        );
         break;
     }
   }
