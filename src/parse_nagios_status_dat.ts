@@ -35,7 +35,7 @@ export type NagiosStatus =
 export async function* parse_nagios_status_file(
   status_file: ReadStream
 ): AsyncGenerator<NagiosStatus | null> {
-  let rl = readline.createInterface(status_file);
+  const rl = readline.createInterface(status_file);
   const iterator = rl[Symbol.asyncIterator]();
   // Parses the file
   for await (const line of iterator) {
