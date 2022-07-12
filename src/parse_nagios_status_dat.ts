@@ -1,7 +1,7 @@
 import {ReadStream} from "fs";
 import * as readline from "readline";
 
-import NagiosStatusInfo from "./nagios/status_file_info";
+import NagiosStatusInfo, { parse_info_block } from "./nagios/status_file_info";
 import NagiosProgramStatus from "./nagios/nagios_program_status";
 import HostStatus from "./nagios/host_status";
 import ServiceStatus from "./nagios/service_status";
@@ -36,9 +36,12 @@ export type NagiosStatus =
 // will not change the file's contents while we're reading it
 export async function* parse_nagios_status_file(status_file: ReadStream): AsyncGenerator<NagiosStatus | null> {
   let rl = readline.createInterface(status_file);
-  for await (const line of rl) {
+  const iterator = rl[Symbol.asyncIterator]();
+  // Parses the file
+  for await (const line of iterator) {
     switch (line.trim()) {
       case "info {":
+        yield { type: "Info", status: await parse_info_block(iterator) };
         break;
       case "programstatus {":
         break;
@@ -59,8 +62,8 @@ export async function* parse_nagios_status_file(status_file: ReadStream): AsyncG
       case "":
         break;
       default:
-        logger.warn({line: line}, "Received unexpected line in `status.dat` file; ignoring it and continuing on as normal")
+        logger.warn({ line: line }, "Received unexpected line in `status.dat` file; ignoring it and continuing on as normal")
+        break;
     }
-    yield null;
   }
 }
