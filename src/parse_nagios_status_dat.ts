@@ -14,6 +14,23 @@ export type NagiosStatus =
   | { type: 'HostStatus'; status: HostStatus }
   | { type: 'ServiceStatus'; status: ServiceStatus };
 
+// Consumes lines until the end of the nagios status block
+export async function do_nothing_parser(
+  rl: AsyncIterableIterator<string>
+): Promise<null> {
+  // Manually iterates through the line iterator
+  let result = await rl.next();
+  while (!result.done) {
+    const line = result.value.trim();
+    // The block has finished being parsed
+    if (line === '}') {
+      return null;
+    }
+    result = await rl.next();
+  }
+  return null;
+}
+
 // Will produce an iterator (via a generator) over a nagios status.dat file stream
 // which converts the status.dat file into usable status objects.
 //
@@ -39,39 +56,54 @@ export async function* parse_nagios_status_file(
   const iterator = rl[Symbol.asyncIterator]();
   // Parses the file
   for await (const line of iterator) {
-    switch (line.trim()) {
-      case 'info {':
-        yield { type: 'Info', status: await parse_info_block(iterator) };
-        break;
-      case 'programstatus {':
-        break;
-      case 'hoststatus {':
-        yield { type: 'HostStatus', status: await parse_host_status(iterator) };
-        break;
-      case 'servicestatus {':
-        yield {
-          type: 'ServiceStatus',
-          status: await parse_service_status(iterator),
-        };
-        break;
-      case 'contactstatus {':
-        break;
-      case 'hostcomment {':
-        break;
-      case 'servicecomment {':
-        break;
-      case 'hostdowntime {':
-        break;
-      case 'servicedowntime {':
-        break;
-      case '':
-        break;
-      default:
-        logger.warn(
-          { line: line },
-          'Received unexpected line in `status.dat` file; ignoring it and continuing on as normal'
-        );
-        break;
+    // The status.dat file starts with a disclaimer section, all of which starts with '#'
+    if (!line.startsWith('#')) {
+      switch (line.trim()) {
+        case 'info {':
+          yield { type: 'Info', status: await parse_info_block(iterator) };
+          break;
+        case 'programstatus {':
+          await do_nothing_parser(iterator);
+          yield null;
+          break;
+        case 'hoststatus {':
+          yield { type: 'HostStatus', status: await parse_host_status(iterator) };
+          break;
+        case 'servicestatus {':
+          yield {
+            type: 'ServiceStatus',
+            status: await parse_service_status(iterator),
+          };
+          break;
+        case 'contactstatus {':
+          await do_nothing_parser(iterator);
+          yield null;
+          break;
+        case 'hostcomment {':
+          await do_nothing_parser(iterator);
+          yield null;
+          break;
+        case 'servicecomment {':
+          await do_nothing_parser(iterator);
+          yield null;
+          break;
+        case 'hostdowntime {':
+          await do_nothing_parser(iterator);
+          yield null;
+          break;
+        case 'servicedowntime {':
+          await do_nothing_parser(iterator);
+          yield null;
+          break;
+        case '':
+          break;
+        default:
+          logger.warn(
+            { line: line },
+            'Received unexpected line in `status.dat` file; ignoring it and continuing on as normal'
+          );
+          break;
+      }
     }
   }
 }
