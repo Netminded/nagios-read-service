@@ -10,8 +10,7 @@ async function app() {
   );
   const status_iter = parse_nagios_status_file(stream);
   for await (const status of status_iter) {
-    if (status !== null)
-      logger.info(status);
+    if (status !== null) logger.info(status);
   }
 }
 

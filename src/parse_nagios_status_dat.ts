@@ -67,7 +67,10 @@ export async function* parse_nagios_status_file(
           yield null;
           break;
         case 'hoststatus {':
-          yield { type: 'HostStatus', status: await parse_host_status(iterator) };
+          yield {
+            type: 'HostStatus',
+            status: await parse_host_status(iterator),
+          };
           break;
         case 'servicestatus {':
           yield {
