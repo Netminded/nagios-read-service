@@ -5,8 +5,6 @@ export default interface Feed {
   organisationId: number;
   spaceId: number;
   pageId: number;
-  color: 'green' | 'amber' | 'red' | 'default';
-  message: string;
   dependencies: number[];
   custom_data: {};
 }

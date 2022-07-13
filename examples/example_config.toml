@@ -1,4 +1,4 @@
-nagios_config_file_path = "/usr/local/nagios/etc/nagios.cfg"
+nagios_config_file_path = "./examples/nagios/nagios.cfg"
 check_interval = 10
 
 # Will expose the diagnostics feeds of services
@@ -6,7 +6,6 @@ check_interval = 10
     # This block applies to any services that match the conditions
     [exposures.services.match]
     service_description = "(?<service_description>.*)"
-    command = "*"
 
     # Defines the diagnostics feed for all services that this block found
     [exposures.services.feeds.diagnostic.is_running]

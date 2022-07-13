@@ -4,8 +4,9 @@ import { parse_nagios_status_file } from './nagios/status/parser';
 import fs from 'fs';
 import ServiceStatus from './nagios/status/service_status_block';
 import parse_nagios_config_file from './nagios/config/parser';
-import { parse_config_file } from './config/config';
+import Config, { parse_config_file } from './config/config';
 import map_service_to_transparent_feed from './feeds/service_status/transparent';
+import Joi from 'joi';
 
 // Polls nagios for the latest status information
 async function poll_nagios_status(nagios_status_path: string) {
@@ -27,30 +28,48 @@ async function poll_nagios_status(nagios_status_path: string) {
   }
 }
 
+// Gets the config from the config file
+async function get_config(): Promise<Config | null> {
+  try {
+    // Loads the config
+    let config = parse_config_file(
+      fs.readFileSync(`${__dirname}/../examples/example_config.toml`, {
+        encoding: 'utf-8',
+      })
+    );
+    logger.info({
+      message: 'Parsed config file',
+      config: config,
+    });
+    return config;
+  } catch (e) {
+    if (e instanceof Joi.ValidationError) {
+      logger.error({
+        message: `Failed to parse config file; received error: '${e.message}'`,
+        details: e.details,
+      });
+      return null;
+    } else {
+      throw e;
+    }
+  }
+}
+
+// Entrypoint
 async function app() {
-  // Loads the config
-  let config = parse_config_file(
-    fs.readFileSync(`${__dirname}/../examples/example_config.toml`, {
-      encoding: 'utf-8',
-    })
-  );
-  logger.debug({
-    message: 'Parse config file',
-    config: config,
-  });
+  let config = await get_config();
+  if (config === null) return;
 
   // Reads the nagios config file
   const nagios_config = await parse_nagios_config_file(
-    fs.createReadStream(`${__dirname}/../examples/nagios/nagios.cfg`, 'utf-8')
+    fs.createReadStream(config.nagios_config_file_path, 'utf-8')
   );
   logger.info({
     message: 'Parsed nagios config file',
     config: nagios_config,
   });
 
-  await poll_nagios_status(
-    `${__dirname}/../examples/nagios/example_status.dat`
-  );
+  await poll_nagios_status(nagios_config.status_file);
 }
 
 app().then(() => {});
