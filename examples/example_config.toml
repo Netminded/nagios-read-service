@@ -1,5 +1,35 @@
-nagios_config_file_path=""
-check_interval=10
+nagios_config_file_path = "/usr/local/nagios/etc/nagios.cfg"
+check_interval = 10
 
-[feeds]
-[feeds.services]
+# Will expose the diagnostics feeds of services
+[[exposures.services]]
+    [exposures.services.match]
+    # This block applies to any services that match the conditions
+    services = { service_description = "(?<service_description>.*)" }
+
+    # Defines the diagnostics feed for all services that this block found
+    [exposures.services.feeds.diagnostic.is_running]
+    space = { id = 9 }
+    page = { id = 10 }
+    naming_scheme = "Diagnostic Feed for ${service_description}"
+
+# Will expose the ping feed for a service with name PING
+[[exposures.services]]
+    [exposures.services.match]
+    # This block applies to any services that match the conditions
+    services = { service_description = "PING" }
+
+    # Defines the transparent feed for the service with description 'PING'
+    [exposures.services.feeds.transparent]
+    space = { id = 9 }
+    page = { id = 10 }
+    naming_scheme = "PING (Transparent)"
+
+    # Defines the ping plugin feed for the service with description 'PING'
+    [exposures.services.feeds.plugin.ping]
+    space = { id = 9 }
+    page = { id = 10 }
+    naming_scheme = "PING"
+
+
+[[exposures.hosts]]

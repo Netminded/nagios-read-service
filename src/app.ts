@@ -29,22 +29,20 @@ async function poll_nagios_status(nagios_status_path: string) {
 
 async function app() {
   // Loads the config
-  let config_file = fs.readFileSync(
-    `${__dirname}/../examples/example_config.toml`,
-    { encoding: 'utf-8' }
+  let config = parser_config_file(
+    fs.readFileSync(`${__dirname}/../examples/example_config.toml`, {
+      encoding: 'utf-8',
+    })
   );
-  let config = parser_config_file(config_file);
   logger.debug({
     message: 'Parse config file',
     config: config,
   });
 
   // Reads the nagios config file
-  const nagios_config_file = fs.createReadStream(
-    `${__dirname}/../examples/nagios/nagios.cfg`,
-    'utf-8'
+  const nagios_config = await parse_nagios_config_file(
+    fs.createReadStream(`${__dirname}/../examples/nagios/nagios.cfg`, 'utf-8')
   );
-  const nagios_config = await parse_nagios_config_file(nagios_config_file);
   logger.info({
     message: 'Parsed nagios config file',
     config: nagios_config,
