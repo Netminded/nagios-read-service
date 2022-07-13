@@ -3,9 +3,10 @@ check_interval = 10
 
 # Will expose the diagnostics feeds of services
 [[exposures.services]]
-    [exposures.services.match]
     # This block applies to any services that match the conditions
-    services = { service_description = "(?<service_description>.*)" }
+    [exposures.services.match]
+    service_description = "(?<service_description>.*)"
+    command = "*"
 
     # Defines the diagnostics feed for all services that this block found
     [exposures.services.feeds.diagnostic.is_running]
@@ -17,7 +18,7 @@ check_interval = 10
 [[exposures.services]]
     [exposures.services.match]
     # This block applies to any services that match the conditions
-    services = { service_description = "PING" }
+    service_description = "PING"
 
     # Defines the transparent feed for the service with description 'PING'
     [exposures.services.feeds.transparent]

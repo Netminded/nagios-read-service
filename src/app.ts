@@ -4,7 +4,7 @@ import { parse_nagios_status_file } from './nagios/status/parser';
 import fs from 'fs';
 import ServiceStatus from './nagios/status/service_status_block';
 import parse_nagios_config_file from './nagios/config/parser';
-import { parser_config_file } from './config';
+import { parse_config_file } from './config/config';
 import map_service_to_transparent_feed from './feeds/service_status/transparent';
 
 // Polls nagios for the latest status information
@@ -29,7 +29,7 @@ async function poll_nagios_status(nagios_status_path: string) {
 
 async function app() {
   // Loads the config
-  let config = parser_config_file(
+  let config = parse_config_file(
     fs.readFileSync(`${__dirname}/../examples/example_config.toml`, {
       encoding: 'utf-8',
     })
