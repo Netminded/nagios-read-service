@@ -4,53 +4,11 @@ import { parse_nagios_status_file } from './nagios/status/parser';
 import fs from 'fs';
 import ServiceStatus from './nagios/status/service_status_block';
 import parse_nagios_config_file from './nagios/config/parser';
+import Config, { parser_config_file } from "./config";
+import map_service_to_transparent_feed from "./feeds/service_status/transparent";
 
-interface FeedResult {
-  color: 'green' | 'amber' | 'red' | 'default';
-  message: string;
-  updated_at: Date;
-}
-
-function map_service_to_transparent_feed(
-  service: ServiceStatus
-): FeedResult | null {
-  if (service.state_type === 'hard_state') {
-    let colour: 'green' | 'amber' | 'red' | 'default' = 'default';
-    switch (service.current_state) {
-      case 'state_ok':
-        colour = 'green';
-        break;
-      case 'state_warning':
-        colour = 'amber';
-        break;
-      case 'state_critical':
-        colour = 'red';
-        break;
-      case 'state_unknown':
-        colour = 'default';
-        break;
-    }
-    return {
-      color: colour,
-      message: service.plugin_output,
-      updated_at: new Date(),
-    };
-  }
-  // With a soft state, we should wait for nagios to turn to a hard state
-  else {
-    return null;
-  }
-}
-
-async function app() {
-  // Reads the nagios config file
-  const nagios_config_file = fs.createReadStream(
-    `${__dirname}/../examples/nagios/nagios.cfg`,
-    'utf-8'
-  );
-  const nagios_config = await parse_nagios_config_file(nagios_config_file);
-  logger.info(nagios_config, 'Parsed nagios config file');
-
+// Polls nagios for the latest status information
+async function poll_nagios_status(_: Config) {
   const stream = fs.createReadStream(
     `${__dirname}/../examples/nagios/example_status.dat`,
     'utf-8'
@@ -70,6 +28,23 @@ async function app() {
       }
     }
   }
+}
+
+async function app() {
+  // Loads the config
+  let config_file = fs.readFileSync(`${__dirname}/../examples/example_config.toml`, {encoding: "utf-8"});
+  let config = parser_config_file(config_file);
+  logger.debug(config, "Parsed config file:")
+
+  // Reads the nagios config file
+  const nagios_config_file = fs.createReadStream(
+    `${__dirname}/../examples/nagios/nagios.cfg`,
+    'utf-8'
+  );
+  const nagios_config = await parse_nagios_config_file(nagios_config_file);
+  logger.info(nagios_config, 'Parsed nagios config file');
+
+  await poll_nagios_status(config);
 }
 
 app().then(() => {});

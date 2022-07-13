@@ -1,0 +1,5 @@
+nagios_config_file_path=""
+check_interval=10
+
+[feeds]
+[feeds.services]
