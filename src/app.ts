@@ -3,6 +3,7 @@ import { logger } from './utils/logger';
 import { parse_nagios_status_file } from './nagios/status/parser';
 import fs from 'fs';
 import ServiceStatus from './nagios/status/service_status_block';
+import parse_nagios_config_file from './nagios/config/parser';
 
 interface FeedResult {
   color: 'green' | 'amber' | 'red' | 'default';
@@ -42,6 +43,14 @@ function map_service_to_transparent_feed(
 }
 
 async function app() {
+  // Reads the nagios config file
+  const nagios_config_file = fs.createReadStream(
+    `${__dirname}/../examples/nagios/nagios.cfg`,
+    'utf-8'
+  );
+  const nagios_config = await parse_nagios_config_file(nagios_config_file);
+  logger.info(nagios_config, 'Parsed nagios config file');
+
   const stream = fs.createReadStream(
     `${__dirname}/../examples/nagios/example_status.dat`,
     'utf-8'
