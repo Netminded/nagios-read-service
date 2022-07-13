@@ -101,10 +101,11 @@ export async function* parse_nagios_status_file(
         case '':
           break;
         default:
-          logger.warn(
-            { line: line },
-            'Received unexpected line in `status.dat` file; ignoring it and continuing on as normal'
-          );
+          logger.warn({
+            message:
+              'Received unexpected line in `status.dat` file; ignoring it and continuing on as normal',
+            line: line,
+          });
           break;
       }
     }

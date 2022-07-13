@@ -3,25 +3,29 @@
 A read only nagios service which generates feeds from nagios status information
 
 ## Service/Hosts -> Feeds
+
 Every service defined in a nagios instance can be exposed as 3 feeds:
 
- 1. A 'transparent' feed, which is a simple mapping of
+1.  A 'transparent' feed, which is a simple mapping of
+
     1. `state_ok` -> `green`
     2. `state_warning` -> `amber`
     3. `state_critical` -> `red`
     4. `state_unknown` -> `default`
 
-    And plugin_output -> `message`. It is a simple feed, 
-    however, it is the easiest way to expose nagios' status decision as a feed. 
- 2. A 'plugin' feed. Each nagios service relies on a 'plugin' to run, 
-    this plugin provides both a status and a string output to nagios, 
+    And plugin_output -> `message`. It is a simple feed,
+    however, it is the easiest way to expose nagios' status decision as a feed.
+
+2.  A 'plugin' feed. Each nagios service relies on a 'plugin' to run,
+    this plugin provides both a status and a string output to nagios,
     which these types of feeds use to interpret a feed result.
 
-    For each plugin, a specific feed interpretation will have to be designed, 
+    For each plugin, a specific feed interpretation will have to be designed,
     but once it exists, a service that uses the plugin, can have the respective feed
- 3. A 'diagnostic' feed, a simple "Is the service running?" feed
 
-All services defined in nagios can be exposed as these feeds. 
+3.  A 'diagnostic' feed, a simple "Is the service running?" feed
+
+All services defined in nagios can be exposed as these feeds.
 Which services get exposed gets defined in the config file
 
 ## Development

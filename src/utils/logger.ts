@@ -1,12 +1,18 @@
-import pino from 'pino';
+import { createLogger, format, transports } from 'winston';
 
-// Sets up the pino-pretty logger
-export const logger = pino({
-  level: "debug",
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-    },
-  },
+export const logger = createLogger({
+  level: 'debug',
+  format: format.combine(
+    format.timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss',
+    }),
+    format.errors({ stack: true }),
+    format.splat(),
+    format.json()
+  ),
+  transports: [
+    new transports.Console({
+      format: format.combine(format.colorize(), format.simple()),
+    }),
+  ],
 });

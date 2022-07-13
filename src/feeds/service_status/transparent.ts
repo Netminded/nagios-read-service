@@ -1,5 +1,5 @@
-import ServiceStatus from "../../nagios/status/service_status_block";
-import FeedResult from "../feed_result";
+import ServiceStatus from '../../nagios/status/service_status_block';
+import FeedResult from '../feed_result';
 
 export default function map_service_to_transparent_feed(
   service: ServiceStatus
