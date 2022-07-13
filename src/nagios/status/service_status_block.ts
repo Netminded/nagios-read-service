@@ -4,7 +4,7 @@ import {
   check_type_number_to_enum,
   state_num_to_enum,
   state_type_to_enum,
-} from './utils';
+} from './parser_utils';
 
 export default interface ServiceStatus {
   host_name: string;
