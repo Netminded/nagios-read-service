@@ -4,6 +4,11 @@ import readline from 'readline';
 import { logger } from '../../utils/logger';
 import ServiceDeclaration, { service_schema } from './service_cache';
 
+export type NagiosObjectDeclaration = {
+  type: 'service';
+  service: ServiceDeclaration;
+};
+
 export async function parse_block(
   rl: AsyncIterableIterator<string>
 ): Promise<{ [key: string]: string }> {
@@ -23,7 +28,7 @@ export async function parse_block(
 
 export async function* parse_object_cache(
   status_file: ReadStream
-): AsyncGenerator<ServiceDeclaration | null> {
+): AsyncGenerator<NagiosObjectDeclaration> {
   const rl = readline.createInterface(status_file);
   const iterator = rl[Symbol.asyncIterator]();
   // Parses the file
@@ -33,15 +38,12 @@ export async function* parse_object_cache(
       switch (line.trim()) {
         case 'define timeperiod {':
           await parse_block(iterator);
-          yield null;
           break;
         case 'define command {':
           await parse_block(iterator);
-          yield null;
           break;
         case 'define contactgroup {':
           await parse_block(iterator);
-          yield null;
           break;
         case 'define hostgroup {':
           await parse_block(iterator);
@@ -51,16 +53,14 @@ export async function* parse_object_cache(
           break;
         case 'define contact {':
           await parse_block(iterator);
-          yield null;
           break;
         case 'define host {':
           await parse_block(iterator);
           break;
         case 'define service {':
           let service = await parse_block(iterator);
-          // TODO Joi Parse
           const { error, value } = service_schema.validate(service);
-          if (error === undefined) yield value;
+          if (error === undefined) yield { type: 'service', service: value };
           else throw error;
           break;
         case 'define servicedependency {':
@@ -68,14 +68,12 @@ export async function* parse_object_cache(
           break;
         case 'define serviceescalation {':
           await parse_block(iterator);
-          yield null;
           break;
         case 'define hostdependency {':
           await parse_block(iterator);
           break;
         case 'define hostescalation {':
           await parse_block(iterator);
-          yield null;
           break;
         case '':
           break;
@@ -89,4 +87,22 @@ export async function* parse_object_cache(
       }
     }
   }
+}
+
+export interface NagiosObjects {
+  services: ServiceDeclaration[];
+}
+
+// A wrapper around `parse_object_cache` to collect all nagios objects into a simple data structure
+export async function collect_nagios_objects(
+  stream: ReadStream
+): Promise<NagiosObjects> {
+  let objects: NagiosObjects = { services: [] };
+  for await (const cached_object of parse_object_cache(stream)) {
+    if (cached_object === null) {
+    } else if (cached_object.type === 'service') {
+      objects.services.push(cached_object.service);
+    }
+  }
+  return objects;
 }

@@ -3,11 +3,15 @@ import { logger } from './utils/logger';
 import { parse_nagios_status_file } from './nagios/status/parser';
 import fs from 'fs';
 import ServiceStatus from './nagios/status/service_status_block';
-import parse_nagios_config_file from './nagios/config/parser';
 import Config, { parse_config_file } from './config/config';
 import map_service_to_transparent_feed from './feeds/service_status/transparent';
-import Joi from 'joi';
-import { parse_object_cache } from './nagios/object_cache/parser';
+import Joi, { ValidationError } from 'joi';
+import {
+  collect_nagios_objects,
+  NagiosObjects,
+} from './nagios/object_cache/parser';
+import parse_nagios_config_file from './nagios/config/parser';
+import { map_services_to_feeds } from './exposures/service';
 
 // Polls nagios for the latest status information
 async function poll_nagios_status(nagios_status_path: string) {
@@ -56,6 +60,28 @@ async function get_config(): Promise<Config | null> {
   }
 }
 
+// Gets the current nagios objects
+async function get_nagios_objects(): Promise<NagiosObjects | null> {
+  try {
+    const stream = fs.createReadStream(
+      `${__dirname}/../examples/nagios/objects.cache`,
+      'utf-8'
+    );
+    return await collect_nagios_objects(stream);
+  } catch (e) {
+    // Handle specific errors
+    if (e instanceof ValidationError) {
+      logger.error({
+        message: `Failed to parse config file; received error: '${e.message}'`,
+        details: e.details,
+      });
+      return null;
+    } else {
+      throw e;
+    }
+  }
+}
+
 // Entrypoint
 async function app() {
   let config = await get_config();
@@ -71,20 +97,18 @@ async function app() {
   });
 
   // Loads the nagios object cache
-  const stream = fs.createReadStream(
-    `${__dirname}/../examples/nagios/objects.cache`,
-    'utf-8'
+  let nagios_objects = await get_nagios_objects();
+  if (nagios_objects === null) return;
+  // Calculates the mapping of service to feeds
+  let service_feed_map = await map_services_to_feeds(
+    config,
+    nagios_objects.services
   );
-  try {
-    for await (const status of parse_object_cache(stream)) {
-      if (status === null) {
-      } else {
-        logger.debug({ message: 'Received cached object', value: status });
-      }
-    }
-  } catch (e) {
-    logger.error(e);
-  }
+  logger.info({
+    message: 'Mapped services to feeds',
+    feeds: service_feed_map,
+  });
+
   await poll_nagios_status(nagios_config.status_file);
 }
 
