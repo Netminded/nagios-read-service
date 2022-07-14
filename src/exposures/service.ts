@@ -81,9 +81,13 @@ export function map_services_to_feeds(
           feeds: service_feeds,
         }
       );
+      // TODO JS MAPS DO NOT WORK
       logger.debug({
-        message: 'Feed map: ',
-        feeds: feed_map,
+        message: `Feeds for ServiceDeclaration(${service.service_description}@${service.host_name}) from the feed map`,
+        feeds: feed_map.get({
+          host_name: service.host_name,
+          service_description: service.service_description,
+        }),
       });
     }
   }
