@@ -7,6 +7,7 @@ import parse_nagios_config_file from './nagios/config/parser';
 import Config, { parse_config_file } from './config/config';
 import map_service_to_transparent_feed from './feeds/service_status/transparent';
 import Joi from 'joi';
+import { parse_object_cache } from './nagios/object_cache/parser';
 
 // Polls nagios for the latest status information
 async function poll_nagios_status(nagios_status_path: string) {
@@ -69,6 +70,21 @@ async function app() {
     config: nagios_config,
   });
 
+  // Loads the nagios object cache
+  const stream = fs.createReadStream(
+    `${__dirname}/../examples/nagios/objects.cache`,
+    'utf-8'
+  );
+  try {
+    for await (const status of parse_object_cache(stream)) {
+      if (status === null) {
+      } else {
+        logger.debug({ message: 'Received cached object', value: status });
+      }
+    }
+  } catch (e) {
+    logger.error(e);
+  }
   await poll_nagios_status(nagios_config.status_file);
 }
 
