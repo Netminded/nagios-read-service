@@ -1,10 +1,7 @@
 // Initialises the project-wide logger
 import { logger } from './utils/logger';
-import { parse_nagios_status_file } from './nagios/status/parser';
 import fs from 'fs';
-import ServiceStatus from './nagios/status/service_status_block';
 import Config, { parse_config_file } from './config/config';
-import map_service_to_transparent_feed from './feeds/service_status/transparent';
 import Joi, { ValidationError } from 'joi';
 import {
   collect_nagios_objects,
@@ -12,26 +9,7 @@ import {
 } from './nagios/object_cache/parser';
 import parse_nagios_config_file from './nagios/config/parser';
 import { map_services_to_feeds } from './exposures/service';
-
-// Polls nagios for the latest status information
-async function poll_nagios_status(nagios_status_path: string) {
-  // We can open a read-only stream as nagios will never overwrite it's contents
-  const stream = fs.createReadStream(nagios_status_path, 'utf-8');
-  for await (const status of parse_nagios_status_file(stream)) {
-    if (status === null) {
-    } else if (status.type === 'ServiceStatus') {
-      logger.debug({
-        message: 'Received service status from nagios, mapping to feeds',
-        status: status,
-      });
-      const feed_result = map_service_to_transparent_feed(status.status);
-      logger.info({
-        message: `Mapped service \`${status.status.service_description}\`@\`${status.status.host_name}\` to feed result`,
-        result: feed_result,
-      });
-    }
-  }
-}
+import { poll_nagios_status } from './jobs/poll_nagios_status';
 
 // Gets the config from the config file
 async function get_config(): Promise<Config | null> {
@@ -105,11 +83,13 @@ async function app() {
     nagios_objects.services
   );
   logger.info({
-    message: 'Mapped services to feeds',
+    message: `Mapped services to feeds; found ${service_feed_map.size} mappings`,
     feeds: service_feed_map,
+    size: service_feed_map.size,
+    keys: [...service_feed_map.keys()],
   });
 
-  await poll_nagios_status(nagios_config.status_file);
+  await poll_nagios_status(nagios_config.status_file, service_feed_map);
 }
 
 app().then(() => {});

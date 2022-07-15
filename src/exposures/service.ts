@@ -1,12 +1,17 @@
-import Feed from '../feeds/feed';
+import { NagiosFeed } from '../feeds/feed';
 import Config from '../config/config';
 import ServiceDeclaration from '../nagios/object_cache/service_cache';
-import { logger } from '../utils/logger';
 
-export type ServiceFeedMap = Map<
-  { host_name: string; service_description: string },
-  { feeds: Feed[] }
->;
+// The key is a combination of the service description and hash name
+// i.e. key = `${check_command}:${service_description}@${host_name}`
+export type ServiceFeedMap = Map<string, { feeds: NagiosFeed[] }>;
+export const service_map_feed_key_function = (service: {
+  check_command: string;
+  service_description: string;
+  host_name: string;
+}): string => {
+  return `${service.check_command}:${service.service_description}@${service.host_name}`;
+};
 
 // Checks if a service matches a Service Match block
 function does_service_match(
@@ -41,6 +46,19 @@ function does_service_match(
   };
 }
 
+// Interpolates the naming scheme, extracts all blocks of {{ ... }} with escapes
+function interpolate_naming_schema(
+  naming_scheme: string,
+  named_groups: { [key: string]: string }
+): string {
+  const r = /((?<!\\){{.*?(?<!\\)}})/g;
+  return naming_scheme.replace(r, (substring) => {
+    let group_name = substring.slice(2, substring.length - 2);
+
+    return named_groups[group_name.trim()] ?? ''; // TODO Error if no group exists
+  });
+}
+
 // Figures out which feeds a service should expose
 export function map_services_to_feeds(
   config: Config,
@@ -57,33 +75,30 @@ export function map_services_to_feeds(
       if (!service_matches.matches) continue;
 
       // Constructs the feeds
-      let service_feeds: Feed[] = [];
+      let service_feeds: NagiosFeed[] = [];
       if (service_exposure_block.feeds.transparent !== undefined) {
         let feed = service_exposure_block.feeds.transparent;
+
         service_feeds.push({
-          custom_data: {},
-          dependencies: [],
-          description: service.service_description,
-          integration_id: '', // TODO Integration ID
-          name: '', // TODO Naming scheme
-          organisationId: 0, // TODO Organisation
-          pageId: feed.page.id,
-          spaceId: feed.space.id,
+          type: 'service:transparent',
+          feed: {
+            custom_data: {},
+            dependencies: [],
+            description: service.service_description,
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.check_command}:${service.service_description}@${service.host_name}`,
+            name: interpolate_naming_schema(
+              feed.naming_scheme,
+              service_matches.named_groups
+            ),
+            organisationId: 0, // TODO Organisation
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
         });
       }
       // Sets up the feeds
-      feed_map.set(
-        {
-          host_name: service.host_name,
-          service_description: service.service_description,
-        },
-        {
-          feeds: service_feeds,
-        }
-      );
-      logger.debug({
-        message: 'Feed map: ',
-        feeds: feed_map,
+      feed_map.set(service_map_feed_key_function(service), {
+        feeds: service_feeds,
       });
     }
   }
