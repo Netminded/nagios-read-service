@@ -37,7 +37,6 @@ export default function start_poll_job(
         await batch_upsert_function(batch);
         diagnostics.feeds_upserted += 25;
         diagnostics.batches_upserted += 1;
-        // @ts-ignore
         batch = [];
       }
     }
@@ -48,7 +47,7 @@ export default function start_poll_job(
       diagnostics.batches_upserted += 1;
     }
     logger.info(
-      `Upserted (${diagnostics.feeds_upserted}) feeds in (${diagnostics.batches_upserted}) batch(es)`
+      `Upserted (${diagnostics.feeds_upserted}) feeds with (${diagnostics.batches_upserted}) batch(es)`
     );
   });
 }
