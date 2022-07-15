@@ -1,12 +1,17 @@
 import Feed from '../feeds/feed';
 import Config from '../config/config';
 import ServiceDeclaration from '../nagios/object_cache/service_cache';
-import { logger } from '../utils/logger';
 
-export type ServiceFeedMap = Map<
-  { host_name: string; service_description: string },
-  { feeds: Feed[] }
->;
+// The key is a combination of the service description and hash name
+// i.e. key = `${check_command}:${service_description}@${host_name}`
+export type ServiceFeedMap = Map<string, { feeds: Feed[] }>;
+export const service_map_feed_key_function = (service: {
+  check_command: string;
+  service_description: string;
+  host_name: string;
+}): string => {
+  return `${service.check_command}:${service.service_description}@${service.host_name}`;
+};
 
 // Checks if a service matches a Service Match block
 function does_service_match(
@@ -72,22 +77,8 @@ export function map_services_to_feeds(
         });
       }
       // Sets up the feeds
-      feed_map.set(
-        {
-          host_name: service.host_name,
-          service_description: service.service_description,
-        },
-        {
-          feeds: service_feeds,
-        }
-      );
-      // TODO JS MAPS DO NOT WORK
-      logger.debug({
-        message: `Feeds for ServiceDeclaration(${service.service_description}@${service.host_name}) from the feed map`,
-        feeds: feed_map.get({
-          host_name: service.host_name,
-          service_description: service.service_description,
-        }),
+      feed_map.set(service_map_feed_key_function(service), {
+        feeds: service_feeds,
       });
     }
   }
