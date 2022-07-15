@@ -4,7 +4,7 @@ import ServiceDeclaration from '../nagios/object_cache/service_cache';
 
 // The key is a combination of the service description and hash name
 // i.e. key = `${check_command}:${service_description}@${host_name}`
-export type ServiceFeedMap = Map<string, { feeds: NagiosFeed[] }>;
+export type ServiceExposureMap = Map<string, { feeds: NagiosFeed[] }>;
 export const service_map_feed_key_function = (service: {
   check_command: string;
   service_description: string;
@@ -63,8 +63,8 @@ function interpolate_naming_schema(
 export function map_services_to_feeds(
   config: Config,
   services: ServiceDeclaration[]
-): ServiceFeedMap {
-  let feed_map: ServiceFeedMap = new Map();
+): ServiceExposureMap {
+  let feed_map: ServiceExposureMap = new Map();
   for (const service_exposure_block of config.exposures.services) {
     // For each service that matches, we define its feeds
     for (const service of services) {
@@ -86,6 +86,46 @@ export function map_services_to_feeds(
             dependencies: [],
             description: service.service_description,
             integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.check_command}:${service.service_description}@${service.host_name}`,
+            name: interpolate_naming_schema(
+              feed.naming_scheme,
+              service_matches.named_groups
+            ),
+            organisationId: 0, // TODO Organisation
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
+        });
+      }
+      if (service_exposure_block.feeds.diagnostic?.is_running !== undefined) {
+        let feed = service_exposure_block.feeds.diagnostic.is_running;
+
+        service_feeds.push({
+          type: 'service:diagnostic:is_running',
+          feed: {
+            custom_data: {},
+            dependencies: [],
+            description: service.service_description,
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.check_command}:${service.service_description}@${service.host_name}`,
+            name: interpolate_naming_schema(
+              feed.naming_scheme,
+              service_matches.named_groups
+            ),
+            organisationId: 0, // TODO Organisation
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
+        });
+      }
+      if (service_exposure_block.feeds.plugin?.ping !== undefined) {
+        let feed = service_exposure_block.feeds.plugin.ping;
+
+        service_feeds.push({
+          type: 'service:plugin:ping',
+          feed: {
+            custom_data: {},
+            dependencies: [],
+            description: service.service_description,
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.check_command}:${service.service_description}@${service.host_name}`,
             name: interpolate_naming_schema(
               feed.naming_scheme,
               service_matches.named_groups
