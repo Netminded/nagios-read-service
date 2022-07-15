@@ -30,8 +30,10 @@ export function* map_nagios_status_to_feed(
             result = map_service_to_transparent_feed(status.status);
             break;
           case 'service:diagnostic:is_running':
+            // TODO, Define status -> feed result map
             break;
           case 'service:plugin:ping':
+            // TODO, Define status -> feed result map
             break;
         }
         // Yields the result

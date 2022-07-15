@@ -96,6 +96,46 @@ export function map_services_to_feeds(
           },
         });
       }
+      if (service_exposure_block.feeds.diagnostic?.is_running !== undefined) {
+        let feed = service_exposure_block.feeds.diagnostic.is_running;
+
+        service_feeds.push({
+          type: 'service:diagnostic:is_running',
+          feed: {
+            custom_data: {},
+            dependencies: [],
+            description: service.service_description,
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.check_command}:${service.service_description}@${service.host_name}`,
+            name: interpolate_naming_schema(
+              feed.naming_scheme,
+              service_matches.named_groups
+            ),
+            organisationId: 0, // TODO Organisation
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
+        });
+      }
+      if (service_exposure_block.feeds.plugin?.ping !== undefined) {
+        let feed = service_exposure_block.feeds.plugin.ping;
+
+        service_feeds.push({
+          type: 'service:plugin:ping',
+          feed: {
+            custom_data: {},
+            dependencies: [],
+            description: service.service_description,
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.check_command}:${service.service_description}@${service.host_name}`,
+            name: interpolate_naming_schema(
+              feed.naming_scheme,
+              service_matches.named_groups
+            ),
+            organisationId: 0, // TODO Organisation
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
+        });
+      }
       // Sets up the feeds
       feed_map.set(service_map_feed_key_function(service), {
         feeds: service_feeds,
