@@ -4,7 +4,7 @@ import ServiceDeclaration from '../nagios/object_cache/service_cache';
 
 // The key is a combination of the service description and hash name
 // i.e. key = `${check_command}:${service_description}@${host_name}`
-export type ServiceFeedMap = Map<string, { feeds: NagiosFeed[] }>;
+export type ServiceExposureMap = Map<string, { feeds: NagiosFeed[] }>;
 export const service_map_feed_key_function = (service: {
   check_command: string;
   service_description: string;
@@ -63,8 +63,8 @@ function interpolate_naming_schema(
 export function map_services_to_feeds(
   config: Config,
   services: ServiceDeclaration[]
-): ServiceFeedMap {
-  let feed_map: ServiceFeedMap = new Map();
+): ServiceExposureMap {
+  let feed_map: ServiceExposureMap = new Map();
   for (const service_exposure_block of config.exposures.services) {
     // For each service that matches, we define its feeds
     for (const service of services) {

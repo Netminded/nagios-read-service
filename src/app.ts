@@ -9,7 +9,7 @@ import {
 } from './nagios/object_cache/parser';
 import parse_nagios_config_file from './nagios/config/parser';
 import { map_services_to_feeds } from './exposures/service';
-import { poll_nagios_status } from './jobs/poll_nagios_status';
+import start_poll_job from './jobs/poll_nagios';
 
 // Gets the config from the config file
 async function get_config(): Promise<Config | null> {
@@ -71,7 +71,6 @@ async function app() {
   );
   logger.info({
     message: 'Parsed nagios config file',
-    config: nagios_config,
   });
 
   // Loads the nagios object cache
@@ -84,12 +83,18 @@ async function app() {
   );
   logger.info({
     message: `Mapped services to feeds; found ${service_feed_map.size} mappings`,
-    feeds: service_feed_map,
-    size: service_feed_map.size,
-    keys: [...service_feed_map.keys()],
   });
 
-  await poll_nagios_status(nagios_config.status_file, service_feed_map);
+  start_poll_job(
+    config,
+    nagios_config,
+    {
+      service_map: service_feed_map,
+    },
+    async (feeds) => {
+      logger.debug(`Upserting batch of size ${feeds.length}`);
+    }
+  );
 }
 
 app().then(() => {});

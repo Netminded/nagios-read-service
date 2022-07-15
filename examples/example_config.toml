@@ -1,5 +1,6 @@
 nagios_config_file_path = "./examples/nagios/nagios.cfg"
 check_interval = 10
+batch_size = 50
 
 # Will expose the diagnostics feeds of services
 [[exposures.services]]

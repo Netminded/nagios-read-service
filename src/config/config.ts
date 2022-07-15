@@ -16,6 +16,7 @@ const regex_validator = (value: string, helpers: Joi.CustomHelpers) => {
 const config_schema = Joi.object({
   nagios_config_file_path: Joi.string().required(),
   check_interval: Joi.number().required(),
+  batch_size: Joi.number().integer().positive().default(25),
   exposures: Joi.object({
     services: Joi.array()
       .items(
@@ -90,6 +91,9 @@ const config_schema = Joi.object({
 export default interface Config {
   nagios_config_file_path: string;
   check_interval: number;
+  // Defines how many feeds should be batched together before submitting to SeeThru.
+  // Defaults to 25
+  batch_size: number;
   // Defines how services are mapped to feeds
   // i.e. 'Feed Exposure' definitions
   exposures: {
