@@ -1,10 +1,10 @@
-import Feed from '../feeds/feed';
+import { NagiosFeed } from '../feeds/feed';
 import Config from '../config/config';
 import ServiceDeclaration from '../nagios/object_cache/service_cache';
 
 // The key is a combination of the service description and hash name
 // i.e. key = `${check_command}:${service_description}@${host_name}`
-export type ServiceFeedMap = Map<string, { feeds: Feed[] }>;
+export type ServiceFeedMap = Map<string, { feeds: NagiosFeed[] }>;
 export const service_map_feed_key_function = (service: {
   check_command: string;
   service_description: string;
@@ -62,18 +62,21 @@ export function map_services_to_feeds(
       if (!service_matches.matches) continue;
 
       // Constructs the feeds
-      let service_feeds: Feed[] = [];
+      let service_feeds: NagiosFeed[] = [];
       if (service_exposure_block.feeds.transparent !== undefined) {
         let feed = service_exposure_block.feeds.transparent;
         service_feeds.push({
-          custom_data: {},
-          dependencies: [],
-          description: service.service_description,
-          integration_id: '', // TODO Integration ID
-          name: '', // TODO Naming scheme
-          organisationId: 0, // TODO Organisation
-          pageId: feed.page.id,
-          spaceId: feed.space.id,
+          type: 'service:transparent',
+          feed: {
+            custom_data: {},
+            dependencies: [],
+            description: service.service_description,
+            integration_id: '', // TODO Integration ID
+            name: '', // TODO Naming scheme
+            organisationId: 0, // TODO Organisation
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
         });
       }
       // Sets up the feeds
