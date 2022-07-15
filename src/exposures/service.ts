@@ -46,6 +46,19 @@ function does_service_match(
   };
 }
 
+// Interpolates the naming scheme, extracts all blocks of {{ ... }} with escapes
+function interpolate_naming_schema(
+  naming_scheme: string,
+  named_groups: { [key: string]: string }
+): string {
+  const r = /((?<!\\){{.*?(?<!\\)}})/g;
+  return naming_scheme.replace(r, (substring) => {
+    let group_name = substring.slice(2, substring.length - 2);
+
+    return named_groups[group_name] ?? ''; // TODO Error if no group exists
+  });
+}
+
 // Figures out which feeds a service should expose
 export function map_services_to_feeds(
   config: Config,
@@ -65,6 +78,7 @@ export function map_services_to_feeds(
       let service_feeds: NagiosFeed[] = [];
       if (service_exposure_block.feeds.transparent !== undefined) {
         let feed = service_exposure_block.feeds.transparent;
+
         service_feeds.push({
           type: 'service:transparent',
           feed: {
@@ -72,7 +86,10 @@ export function map_services_to_feeds(
             dependencies: [],
             description: service.service_description,
             integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.check_command}:${service.service_description}@${service.host_name}`,
-            name: '', // TODO Naming scheme
+            name: interpolate_naming_schema(
+              feed.naming_scheme,
+              service_matches.named_groups
+            ),
             organisationId: 0, // TODO Organisation
             pageId: feed.page.id,
             spaceId: feed.space.id,

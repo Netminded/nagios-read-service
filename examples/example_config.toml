@@ -11,7 +11,13 @@ check_interval = 10
     [exposures.services.feeds.diagnostic.is_running]
     space = { id = 9 }
     page = { id = 10 }
-    naming_scheme = "Diagnostic Feed for ${service_description}"
+    naming_scheme = "Diagnostic Feed for {{service_description}}"
+
+    # Defines the transparant feed for all services that this block found
+    [exposures.services.feeds.transparent]
+    space = { id = 10 }
+    page = { id = 10 }
+    naming_scheme = "Transparent Feed for {{service_description}}"
 
 # Will expose the ping feed for a service with name PING
 [[exposures.services]]
