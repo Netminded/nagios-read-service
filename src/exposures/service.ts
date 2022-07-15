@@ -55,7 +55,7 @@ function interpolate_naming_schema(
   return naming_scheme.replace(r, (substring) => {
     let group_name = substring.slice(2, substring.length - 2);
 
-    return named_groups[group_name] ?? ''; // TODO Error if no group exists
+    return named_groups[group_name.trim()] ?? ''; // TODO Error if no group exists
   });
 }
 
