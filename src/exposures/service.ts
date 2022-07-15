@@ -71,7 +71,7 @@ export function map_services_to_feeds(
             custom_data: {},
             dependencies: [],
             description: service.service_description,
-            integration_id: '', // TODO Integration ID
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.check_command}:${service.service_description}@${service.host_name}`,
             name: '', // TODO Naming scheme
             organisationId: 0, // TODO Organisation
             pageId: feed.page.id,
