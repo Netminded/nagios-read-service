@@ -1,5 +1,6 @@
 import * as toml from 'toml';
 import * as Joi from 'joi';
+import * as cron from 'cron-parser';
 
 const regex_validator = (value: string, helpers: Joi.CustomHelpers) => {
   try {
@@ -13,9 +14,19 @@ const regex_validator = (value: string, helpers: Joi.CustomHelpers) => {
   }
 };
 
+const cron_validator = (value: string, helpers: Joi.CustomHelpers) => {
+  try {
+    cron.parseExpression(value);
+    return value;
+  } catch (e) {
+    if (e instanceof Error) return helpers.message({ custom: e.message });
+    else throw e;
+  }
+};
+
 const config_schema = Joi.object({
   nagios_config_file_path: Joi.string().required(),
-  check_interval: Joi.number().required(),
+  poll_cron: Joi.string().custom(cron_validator).required(),
   batch_size: Joi.number().integer().positive().default(25),
   exposures: Joi.object({
     services: Joi.array()
@@ -90,7 +101,7 @@ const config_schema = Joi.object({
 //   };
 export default interface Config {
   nagios_config_file_path: string;
-  check_interval: number;
+  poll_cron: number;
   // Defines how many feeds should be batched together before submitting to SeeThru.
   // Defaults to 25
   batch_size: number;

@@ -1,5 +1,5 @@
 nagios_config_file_path = "./examples/nagios/nagios.cfg"
-check_interval = 10
+poll_cron = "* * * * *"
 batch_size = 50
 
 # Will expose the diagnostics feeds of services

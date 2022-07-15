@@ -16,7 +16,7 @@ export default function start_poll_job(
   batch_upsert_function: BatchUpsert
 ) {
   logger.info("Starting 'Poll Nagios Status' job");
-  return schedule.scheduleJob('* * * * *', async function () {
+  return schedule.scheduleJob(config.poll_cron, async function () {
     logger.info("Polling nagios for status' and syncing with SeeThru");
 
     // Diagnostic info
