@@ -3,6 +3,7 @@ import { logger } from './utils/logger';
 import fs from 'fs';
 import Config, { parse_config_file } from './config/config';
 import Joi, { ValidationError } from 'joi';
+
 import {
   collect_nagios_objects,
   NagiosObjects,

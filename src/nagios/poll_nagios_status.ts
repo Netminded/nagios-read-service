@@ -6,6 +6,7 @@ import FeedResult from '../feeds/feed_result';
 import map_service_to_transparent_feed from '../feeds/service_status/transparent';
 import Feed from '../feeds/feed';
 import { ExposureMap } from '../exposures/exposures';
+import map_service_to_plugin_ping_feed from '../feeds/service_status/plugins/ping';
 
 // Maps a nagios status to a bunch of feed results, each result is yielded for
 // a calling function to handle
@@ -33,7 +34,7 @@ export function* map_nagios_status_to_feed(
             // TODO, Define status -> feed result map
             break;
           case 'service:plugin:ping':
-            // TODO, Define status -> feed result map
+            result = map_service_to_plugin_ping_feed(status.status);
             break;
         }
         // Yields the result
