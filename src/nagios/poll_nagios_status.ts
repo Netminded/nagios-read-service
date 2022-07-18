@@ -37,7 +37,7 @@ export function* map_nagios_status_to_feed(
             result = map_service_to_plugin_ping_feed(status.status);
             break;
         }
-        // Yields the result
+        // Yields the result, if it is null (likely due to soft state), we ignore the result
         if (result !== null) yield [feed.feed, result];
       }
       break;
