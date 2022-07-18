@@ -8,7 +8,7 @@ import {
   collect_nagios_objects,
   NagiosObjects,
 } from './nagios/object_cache/parser';
-import parse_nagios_config_file from './nagios/config/parser';
+import parse_nagios_config_file, { NagiosConfig } from './nagios/config/parser';
 import { map_services_to_feeds } from './exposures/service';
 import start_poll_job from './jobs/poll_nagios';
 
@@ -40,10 +40,12 @@ async function get_config(): Promise<Config | null> {
 }
 
 // Gets the current nagios objects
-async function get_nagios_objects(): Promise<NagiosObjects | null> {
+async function get_nagios_objects(
+  nagios_config: NagiosConfig
+): Promise<NagiosObjects | null> {
   try {
     const stream = fs.createReadStream(
-      `${__dirname}/../examples/nagios/objects.cache`,
+      nagios_config.object_cache_file,
       'utf-8'
     );
     return await collect_nagios_objects(stream);
@@ -75,7 +77,7 @@ async function app() {
   });
 
   // Loads the nagios object cache
-  let nagios_objects = await get_nagios_objects();
+  let nagios_objects = await get_nagios_objects(nagios_config);
   if (nagios_objects === null) return;
   // Calculates the mapping of service to feeds
   let service_feed_map = await map_services_to_feeds(
@@ -93,7 +95,13 @@ async function app() {
       service_map: service_feed_map,
     },
     async (feeds) => {
-      logger.debug(`Upserting batch of size ${feeds.length}`);
+      for (const [feed, result] of feeds) {
+        logger.info({
+          message: 'Upserting feed: ',
+          feed: feed,
+          result: result,
+        });
+      }
     }
   );
 }
