@@ -25,7 +25,9 @@ const cron_validator = (value: string, helpers: Joi.CustomHelpers) => {
 };
 
 const config_schema = Joi.object({
-  nagios_config_file_path: Joi.string().required(),
+  nagios_config_file_path: Joi.string()
+    .default('/usr/local/nagios/etc/nagios.etc')
+    .required(),
   poll_cron: Joi.string().custom(cron_validator).required(),
   batch_size: Joi.number().integer().positive().default(25),
   exposures: Joi.object({
@@ -80,7 +82,7 @@ const config_schema = Joi.object({
       )
       .required(),
     //
-    hosts: Joi.array().items(Joi.object({})).required(),
+    hosts: Joi.array().items(Joi.object({})),
   }).required(),
 });
 
