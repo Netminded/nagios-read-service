@@ -68,18 +68,20 @@ To format the project: `npm run fmt` or `npm run prettier`
 
 ### Download
 
-[//]: #
-[//]: # ' 1. You first need to download the latest release, `<Link to latest release in GitHub releases>`'
-[//]: # '    1. With curl'
-[//]: # '    2. With wget'
-[//]: # ' 2. Unzip result'
-[//]: # ' 3. Once in the directory, you need to install the project dependencies `npm install --production`'
-[//]: #
-[//]: # 'At this point, the project is ready to run'
+ 1. You first need to download the latest release, TODO (Link)
+    1. With curl
+    2. With wget
+ 2. Unzip the directory
+ 3. Once in the directory, you need to install the dependencies `npm install --production`
+
+At this point, the component is ready to run with `npm run start`. 
+However, for running in production, see [Running](#running-1) 
 
 ## Running
 
 ### systemd (Preferred)
+
+
 
 ### Docker
 
