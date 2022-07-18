@@ -81,6 +81,7 @@ export function map_services_to_feeds(
           type: 'service:transparent',
           feed: {
             custom_data: {},
+            api_key_name: feed.api_key,
             dependencies: [],
             description: interpolate_string(
               feed.description,
@@ -101,6 +102,7 @@ export function map_services_to_feeds(
           type: 'service:diagnostic:is_running',
           feed: {
             custom_data: {},
+            api_key_name: feed.api_key,
             dependencies: [],
             description: interpolate_string(
               feed.description,
@@ -121,6 +123,7 @@ export function map_services_to_feeds(
           type: 'service:plugin:ping',
           feed: {
             custom_data: {},
+            api_key_name: feed.api_key,
             dependencies: [],
             description: interpolate_string(
               feed.description,

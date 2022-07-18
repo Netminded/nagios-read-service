@@ -16,6 +16,9 @@ import { hideBin } from 'yargs/helpers';
 import path from 'path';
 import start_refresh_token_job from './jobs/refresh_token';
 import { ApiKeys, extract_api_keys } from './dashboard_api/api_key';
+import FeedResult from './feeds/feed_result';
+import Feed from './feeds/feed';
+import { batch_api_upsert } from './dashboard_api/upsert';
 
 // Gets the config from the config file
 async function get_config(config_file_path: string): Promise<Config | null> {
@@ -114,8 +117,29 @@ async function start(config_file_path: string, dry_run: boolean) {
           });
         }
       } else {
-        // Upserts to the dashboard
-        // await batch_api_upsert(config?.api.upsert_endpoint, , feeds); // TODO Token, URL
+        let key_batches: { [key: string]: [Feed, FeedResult][] } = {};
+        for (const name in api_keys) key_batches[name] = [];
+        // Sorts the batch into their respective api key batches
+        for (const [feed, result] of feeds) {
+          key_batches[feed.api_key_name].push([feed, result]);
+        }
+
+        // Batch upserts each feed
+        for (const name in key_batches) {
+          if (config === null) return;
+
+          let token = api_keys[name].token;
+          if (token === undefined) continue;
+
+          // Gets the batch
+          let batch = key_batches[name];
+
+          await batch_api_upsert(
+            new URL(config.api.upsert_endpoint),
+            token,
+            batch
+          );
+        }
       }
     }
   );
