@@ -2,6 +2,14 @@ nagios_config_file_path = "./examples/nagios/nagios.cfg"
 poll_cron = "* * * * *"
 batch_size = 50
 
+[api]
+upsert_endpoint = "https://api.seethrunetworks.com/api/v3/feed/update"
+
+[api.keys.default]
+type = "jwt"
+secret_key = "{{ api_key_secret_key }}"
+uuid = "{{ api_key_uuid }}"
+
 # Will expose the diagnostics feeds of services
 [[exposures.services]]
     # This block applies to any services that match the conditions

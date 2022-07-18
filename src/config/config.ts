@@ -30,6 +30,21 @@ const config_schema = Joi.object({
     .required(),
   poll_cron: Joi.string().custom(cron_validator).required(),
   batch_size: Joi.number().integer().positive().default(25),
+  api: Joi.object({
+    // The full url of the endpoint
+    upsert_endpoint: Joi.string().uri().required(),
+    jwt_key_refresh_endpoint: Joi.string().uri().required(),
+    keys: Joi.object()
+      .pattern(
+        Joi.string(),
+        Joi.object({
+          type: Joi.string().pattern(/jwt/).required(),
+          secret_key: Joi.string().required(),
+          uuid: Joi.string().required(),
+        }).required()
+      )
+      .required(),
+  }).required(),
   exposures: Joi.object({
     services: Joi.array()
       .items(
@@ -92,6 +107,21 @@ export default interface Config {
   // Defines how many feeds should be batched together before submitting to SeeThru.
   // Defaults to 25
   batch_size: number;
+  api: {
+    // The full url of the endpoint
+    upsert_endpoint: string;
+    jwt_key_refresh_endpoint: string;
+    // Named api keys, as they are named, different api keys, and/or types can be
+    // used for different feeds. You should always have a default
+    keys: {
+      [key: string]: {
+        type: 'jwt';
+        // The two credentials needed to generate jwts
+        secret_key: string;
+        uuid: string;
+      };
+    };
+  };
   // Defines how services are mapped to feeds
   // i.e. 'Feed Exposure' definitions
   exposures: {
@@ -107,6 +137,9 @@ export default interface Config {
       feeds: {
         // Do these services expose a 'transparent' feed?
         transparent?: {
+          // The name of the api key to use, defaults to 'default'
+          api_key: string;
+          // Who owns ths feed
           organisation: { id: number };
           page: { id: number };
           space: { id: number };
@@ -118,6 +151,9 @@ export default interface Config {
         diagnostic?: {
           // Do these services expose a 'is_running' diagnostic feed?
           is_running?: {
+            // The name of the api key to use, defaults to 'default'
+            api_key: string;
+            // Who owns ths feed
             organisation: { id: number };
             page: { id: number };
             space: { id: number };
@@ -130,6 +166,9 @@ export default interface Config {
         plugin?: {
           // Do these services expose a 'ping' plugin feed?
           ping?: {
+            // The name of the api key to use, defaults to 'default'
+            api_key: string;
+            // Who owns ths feed
             organisation: { id: number };
             page: { id: number };
             space: { id: number };

@@ -6,8 +6,7 @@ import { ExposureMap } from '../exposures/exposures';
 import FeedResult from '../feeds/feed_result';
 import Feed from '../feeds/feed';
 import { NagiosConfig } from '../nagios/config/parser';
-
-export type BatchUpsert = (feeds: [Feed, FeedResult][]) => Promise<void>;
+import { BatchUpsert } from '../feeds/upsert';
 
 export default function start_poll_job(
   config: Config,

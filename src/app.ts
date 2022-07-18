@@ -14,6 +14,8 @@ import start_poll_job from './jobs/poll_nagios';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import path from 'path';
+import start_refresh_token_job from './jobs/refresh_token';
+import { ApiKeys, extract_api_keys } from './dashboard_api/api_key';
 
 // Gets the config from the config file
 async function get_config(config_file_path: string): Promise<Config | null> {
@@ -91,6 +93,11 @@ async function start(config_file_path: string, dry_run: boolean) {
     message: `Mapped services to feeds; found ${service_feed_map.size} mappings`,
   });
 
+  let api_keys: ApiKeys = extract_api_keys(config);
+
+  // Refreshes tokens
+  start_refresh_token_job(config, api_keys);
+
   start_poll_job(
     config,
     nagios_config,
@@ -98,20 +105,17 @@ async function start(config_file_path: string, dry_run: boolean) {
       service_map: service_feed_map,
     },
     async (feeds) => {
-      for (const [feed, result] of feeds) {
-        if (dry_run) {
+      if (dry_run) {
+        for (const [feed, result] of feeds) {
           logger.info({
             message: '[Dry] Upserting feed: ',
             feed: feed,
             result: result,
           });
-        } else {
-          logger.info({
-            message: 'Upserting feed: ',
-            feed: feed,
-            result: result,
-          });
         }
+      } else {
+        // Upserts to the dashboard
+        // await batch_api_upsert(config?.api.upsert_endpoint, , feeds); // TODO Token, URL
       }
     }
   );
