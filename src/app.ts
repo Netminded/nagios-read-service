@@ -11,13 +11,16 @@ import {
 import parse_nagios_config_file, { NagiosConfig } from './nagios/config/parser';
 import { map_services_to_feeds } from './exposures/service';
 import start_poll_job from './jobs/poll_nagios';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+import path from 'path';
 
 // Gets the config from the config file
-async function get_config(): Promise<Config | null> {
+async function get_config(config_file_path: string): Promise<Config | null> {
   try {
     // Loads the config
     let config = parse_config_file(
-      fs.readFileSync(`${__dirname}/../examples/example_config.toml`, {
+      fs.readFileSync(config_file_path, {
         encoding: 'utf-8',
       })
     );
@@ -64,8 +67,8 @@ async function get_nagios_objects(
 }
 
 // Entrypoint
-async function app() {
-  let config = await get_config();
+async function start(config_file_path: string) {
+  let config = await get_config(config_file_path);
   if (config === null) return;
 
   // Reads the nagios config file
@@ -106,4 +109,24 @@ async function app() {
   );
 }
 
-app().then(() => {});
+yargs(hideBin(process.argv))
+  .command(
+    'start',
+    'Start the service',
+    (yargs) => {
+      yargs
+        .option('config', {
+          alias: 'c',
+          type: 'string',
+          default: '/etc/netminded/nagios/config.toml',
+          description: "The path of the service's config file",
+        })
+        .coerce('config', path.resolve);
+    },
+    (argv) => {
+      // @ts-ignore
+      start(argv.config).then(() => {});
+    }
+  )
+  .demandCommand()
+  .parse();
