@@ -10,15 +10,17 @@ batch_size = 50
 
     # Defines the diagnostics feed for all services that this block found
     [exposures.services.feeds.diagnostic.is_running]
-    space = { id = 9 }
+    organisation = { id = 1 }
     page = { id = 10 }
-    naming_scheme = "Diagnostic Feed for {{service_description}}"
+    space = { id = 9 }
+    name = "Diagnostic Feed for {{service_description}}"
 
     # Defines the transparant feed for all services that this block found
     [exposures.services.feeds.transparent]
+    organisation = { id = 1 }
     space = { id = 10 }
     page = { id = 10 }
-    naming_scheme = "Transparent Feed for {{service_description}}"
+    name = "Transparent Feed for {{service_description}}"
 
 # Will expose the ping feed for a service with name PING
 [[exposures.services]]
@@ -28,15 +30,17 @@ batch_size = 50
 
     # Defines the transparent feed for the service with description 'PING'
     [exposures.services.feeds.transparent]
-    space = { id = 9 }
+    organisation = { id = 1 }
     page = { id = 10 }
-    naming_scheme = "PING (Transparent)"
+    space = { id = 9 }
+    name = "PING (Transparent)"
 
     # Defines the ping plugin feed for the service with description 'PING'
     [exposures.services.feeds.plugin.ping]
-    space = { id = 9 }
+    organisation = { id = 1 }
     page = { id = 10 }
-    naming_scheme = "PING"
+    space = { id = 9 }
+    name = "PING"
 
 
 [[exposures.hosts]]

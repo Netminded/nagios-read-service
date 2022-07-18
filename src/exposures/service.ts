@@ -1,6 +1,7 @@
 import { NagiosFeed } from '../feeds/feed';
 import Config from '../config/config';
 import ServiceDeclaration from '../nagios/object_cache/service_cache';
+import { interpolate_string } from '../utils/interpolation';
 
 // The key is a combination of the service description and hash name
 // i.e. key = `${check_command}:${service_description}@${host_name}`
@@ -46,19 +47,6 @@ function does_service_match(
   };
 }
 
-// Interpolates the naming scheme, extracts all blocks of {{ ... }} with escapes
-function interpolate_naming_schema(
-  naming_scheme: string,
-  named_groups: { [key: string]: string }
-): string {
-  const r = /((?<!\\){{.*?(?<!\\)}})/g;
-  return naming_scheme.replace(r, (substring) => {
-    let group_name = substring.slice(2, substring.length - 2);
-
-    return named_groups[group_name.trim()] ?? ''; // TODO Error if no group exists
-  });
-}
-
 // Figures out which feeds a service should expose
 export function map_services_to_feeds(
   config: Config,
@@ -73,6 +61,16 @@ export function map_services_to_feeds(
         service_exposure_block.match
       );
       if (!service_matches.matches) continue;
+      // The fields that string interpolation can use
+      let interpolation_fields = {
+        // Default fields
+        host_name: service.host_name,
+        service_description: service.service_description,
+        check_command: service.check_command,
+        display_name: service.display_name,
+        // Fields captured by the regex
+        ...service_matches.named_groups,
+      };
 
       // Constructs the feeds
       let service_feeds: NagiosFeed[] = [];
@@ -84,12 +82,12 @@ export function map_services_to_feeds(
           feed: {
             custom_data: {},
             dependencies: [],
-            description: service.service_description,
-            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.check_command}:${service.service_description}@${service.host_name}`,
-            name: interpolate_naming_schema(
-              feed.naming_scheme,
-              service_matches.named_groups
+            description: interpolate_string(
+              feed.description,
+              interpolation_fields
             ),
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.check_command}:${service.service_description}@${service.host_name}`,
+            name: interpolate_string(feed.name, interpolation_fields),
             organisationId: 0, // TODO Organisation
             pageId: feed.page.id,
             spaceId: feed.space.id,
@@ -104,12 +102,12 @@ export function map_services_to_feeds(
           feed: {
             custom_data: {},
             dependencies: [],
-            description: service.service_description,
-            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.check_command}:${service.service_description}@${service.host_name}`,
-            name: interpolate_naming_schema(
-              feed.naming_scheme,
-              service_matches.named_groups
+            description: interpolate_string(
+              feed.description,
+              interpolation_fields
             ),
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.check_command}:${service.service_description}@${service.host_name}`,
+            name: interpolate_string(feed.name, interpolation_fields),
             organisationId: 0, // TODO Organisation
             pageId: feed.page.id,
             spaceId: feed.space.id,
@@ -124,12 +122,12 @@ export function map_services_to_feeds(
           feed: {
             custom_data: {},
             dependencies: [],
-            description: service.service_description,
-            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.check_command}:${service.service_description}@${service.host_name}`,
-            name: interpolate_naming_schema(
-              feed.naming_scheme,
-              service_matches.named_groups
+            description: interpolate_string(
+              feed.description,
+              interpolation_fields
             ),
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.check_command}:${service.service_description}@${service.host_name}`,
+            name: interpolate_string(feed.name, interpolation_fields),
             organisationId: 0, // TODO Organisation
             pageId: feed.page.id,
             spaceId: feed.space.id,

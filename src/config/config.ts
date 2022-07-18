@@ -43,27 +43,36 @@ const config_schema = Joi.object({
           feeds: Joi.object({
             // Do these services expose a 'transparent' feed?
             transparent: Joi.object({
+              organisation: Joi.object({ id: Joi.number() }).required(),
               page: Joi.object({ id: Joi.number() }).required(),
               space: Joi.object({ id: Joi.number() }).required(),
               // The naming scheme of the transparent feed for these services
-              naming_scheme: Joi.string().required(), // TODO
+              name: Joi.string().required(),
+              // The description, defaults to the service description
+              description: Joi.string().default('{{ service_description }}'),
             }),
             diagnostic: Joi.object({
               // Do these services expose a 'is_running' diagnostic feed?
               is_running: Joi.object({
+                organisation: Joi.object({ id: Joi.number() }).required(),
                 page: Joi.object({ id: Joi.number() }).required(),
                 space: Joi.object({ id: Joi.number() }).required(),
                 // The naming scheme of the transparent feed for these services
-                naming_scheme: Joi.string().required(), // TODO
+                name: Joi.string().required(),
+                // The description, defaults to the service description
+                description: Joi.string().default('{{ service_description }}'),
               }),
             }),
             plugin: Joi.object({
               // Do these services expose a 'ping' plugin feed?
               ping: Joi.object({
+                organisation: Joi.object({ id: Joi.number() }).required(),
                 page: Joi.object({ id: Joi.number() }).required(),
                 space: Joi.object({ id: Joi.number() }).required(),
                 // The naming scheme of the transparent feed for these services
-                naming_scheme: Joi.string().required(), // TODO
+                name: Joi.string().required(),
+                // The description, defaults to the service description
+                description: Joi.string().default('{{ service_description }}'),
               }),
             }),
           }).required(),
@@ -75,30 +84,6 @@ const config_schema = Joi.object({
   }).required(),
 });
 
-// Example
-// {
-//     nagios_config_file_path: '',
-//     check_interval: 0,
-//     exposures: {
-//       services: [
-//         {
-//           match: {
-//             service_description: new RegExp('(?<service_description>.*)'),
-//           },
-//           feeds: {
-//             diagnostic: {
-//               is_running: {
-//                 page: { id: 9 },
-//                 space: { id: 10 },
-//                 naming_scheme: 'Diagnostic Feed for ${service_description}',
-//               },
-//             },
-//           },
-//         },
-//       ],
-//       hosts: [],
-//     },
-//   };
 export default interface Config {
   nagios_config_file_path: string;
   poll_cron: number;
@@ -120,27 +105,36 @@ export default interface Config {
       feeds: {
         // Do these services expose a 'transparent' feed?
         transparent?: {
+          organisation: { id: number };
           page: { id: number };
           space: { id: number };
           // The naming scheme of the transparent feed for these services
-          naming_scheme: any; // TODO
+          name: any;
+          // The description, defaults to the service description
+          description: any;
         };
         diagnostic?: {
           // Do these services expose a 'is_running' diagnostic feed?
           is_running?: {
+            organisation: { id: number };
             page: { id: number };
             space: { id: number };
             // The naming scheme of the is_running diagnostic feed for these services
-            naming_scheme: any; // TODO
+            name: any;
+            // The description, defaults to the service description
+            description: any;
           };
         };
         plugin?: {
           // Do these services expose a 'ping' plugin feed?
           ping?: {
+            organisation: { id: number };
             page: { id: number };
             space: { id: number };
             // The naming scheme of the ping plugin feed for these services
-            naming_scheme: any; // TODO
+            name: any;
+            // The description, defaults to the service description
+            description: any;
           };
         };
       };
