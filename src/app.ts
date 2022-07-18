@@ -67,7 +67,7 @@ async function get_nagios_objects(
 }
 
 // Entrypoint
-async function start(config_file_path: string) {
+async function start(config_file_path: string, dry_run: boolean) {
   let config = await get_config(config_file_path);
   if (config === null) return;
 
@@ -99,11 +99,19 @@ async function start(config_file_path: string) {
     },
     async (feeds) => {
       for (const [feed, result] of feeds) {
-        logger.info({
-          message: 'Upserting feed: ',
-          feed: feed,
-          result: result,
-        });
+        if (dry_run) {
+          logger.info({
+            message: '[Dry] Upserting feed: ',
+            feed: feed,
+            result: result,
+          });
+        } else {
+          logger.info({
+            message: 'Upserting feed: ',
+            feed: feed,
+            result: result,
+          });
+        }
       }
     }
   );
@@ -118,14 +126,19 @@ yargs(hideBin(process.argv))
         .option('config', {
           alias: 'c',
           type: 'string',
-          default: '/etc/netminded/nagios/config.toml',
-          description: "The path of the service's config file",
+          default: '/etc/netminded/nagios-read-service/config.toml',
+          description: "The path to the service's config file",
         })
         .coerce('config', path.resolve);
+      yargs.option('dry-run', {
+        type: 'boolean',
+        default: false,
+        description: 'If true, then there is no interaction with the api',
+      });
     },
     (argv) => {
       // @ts-ignore
-      start(argv.config).then(() => {});
+      start(argv.config, argv.dryRun).then(() => {});
     }
   )
   .demandCommand()
