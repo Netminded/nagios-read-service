@@ -4,7 +4,7 @@ batch_size = 50
 
 [api]
 upsert_endpoint = "https://api.seethrunetworks.com/api/v3/feed/update"
-jwt_key_refresh_endpoint = "httpa://api.seethrunetworks.com/api/token"
+jwt_key_refresh_endpoint = "https://api.seethrunetworks.com/api/token"
 
 [api.keys.default]
 type = "jwt"

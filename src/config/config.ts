@@ -62,6 +62,7 @@ const config_schema = Joi.object({
           feeds: Joi.object({
             // Do these services expose a 'transparent' feed?
             transparent: Joi.object({
+              api_key: Joi.string().default('default'),
               organisation: Joi.object({ id: Joi.number() }).required(),
               page: Joi.object({ id: Joi.number() }).required(),
               space: Joi.object({ id: Joi.number() }).required(),
@@ -73,6 +74,7 @@ const config_schema = Joi.object({
             diagnostic: Joi.object({
               // Do these services expose a 'is_running' diagnostic feed?
               is_running: Joi.object({
+                api_key: Joi.string().default('default'),
                 organisation: Joi.object({ id: Joi.number() }).required(),
                 page: Joi.object({ id: Joi.number() }).required(),
                 space: Joi.object({ id: Joi.number() }).required(),
@@ -85,6 +87,7 @@ const config_schema = Joi.object({
             plugin: Joi.object({
               // Do these services expose a 'ping' plugin feed?
               ping: Joi.object({
+                api_key: Joi.string().default('default'),
                 organisation: Joi.object({ id: Joi.number() }).required(),
                 page: Joi.object({ id: Joi.number() }).required(),
                 space: Joi.object({ id: Joi.number() }).required(),

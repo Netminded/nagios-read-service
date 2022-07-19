@@ -10,20 +10,33 @@ export default function start_refresh_token_job(
   api_keys: ApiKeys
 ) {
   logger.info("Starting 'Refresh Api Token' job");
-  return schedule.scheduleJob('*/30 * * * *', async function () {
+  const job = schedule.scheduleJob('*/30 * * * *', async function () {
     logger.info('Refreshing api tokens');
-    for (const name in api_keys) {
-      const key = api_keys[name];
-      // Handle jwt
-      if (key.type === 'jwt') {
-        const token = await refresh_jwt_token(
-          config.api.jwt_key_refresh_endpoint,
-          name,
-          key.secret_key,
-          key.uuid
-        );
-        if (token !== null) key.token = token;
+
+    try {
+      for (const name in api_keys) {
+        const key = api_keys[name];
+        // Handle jwt
+        if (key.type === 'jwt') {
+          const token = await refresh_jwt_token(
+            config.api.jwt_key_refresh_endpoint,
+            name,
+            key.secret_key,
+            key.uuid
+          );
+          if (token !== null) key.token = token;
+        }
       }
+    } catch (e) {
+      if (e instanceof Error)
+        logger.error({
+          message: `Failed to refresh token: '${e.message}'. Continuing`,
+          error: e,
+        });
+      else logger.error(e);
     }
   });
+  // Runs the job for a first time, to fetch the first set of tokens
+  job.invoke();
+  return job;
 }

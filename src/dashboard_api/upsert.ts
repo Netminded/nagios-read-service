@@ -1,6 +1,7 @@
 import Feed from '../feeds/feed';
 import FeedResult from '../feeds/feed_result';
 import axios from 'axios';
+import { logger } from '../utils/logger';
 
 interface UpsertFeed {
   integration_id: string;
@@ -71,5 +72,15 @@ export async function batch_api_upsert(
     feeds: feeds.map(([feed, result]) => feed_upsert_map(feed, result)),
   };
 
-  await axios.put(url.toString(), body, config);
+  const response = await axios.put(url.toString(), body, config);
+  logger.debug({
+    message: 'Received response from api: ',
+    response: response,
+  });
+  if (response.status === 404)
+    throw Error(`Api upsert endpoint '${url}' does not exist`);
+  else if (response.status !== 200)
+    throw Error(`Api upsert endpoint returned non 200 response`);
+  else if (!response.data.success)
+    throw Error(`Api upsert failed, with response: ${response.data.message}`);
 }
