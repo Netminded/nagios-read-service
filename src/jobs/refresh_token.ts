@@ -13,7 +13,7 @@ export default function start_refresh_token_job(
   return schedule.scheduleJob('*/30 * * * *', async function () {
     logger.info('Refreshing api tokens');
     for (const name in api_keys) {
-      let key = api_keys[name];
+      const key = api_keys[name];
       // Handle jwt
       if (key.type === 'jwt') {
         const token = await refresh_jwt_token(

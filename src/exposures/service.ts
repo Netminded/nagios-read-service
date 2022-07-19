@@ -29,10 +29,10 @@ function does_service_match(
     return { matches: false };
 
   // Matches against the service
-  let desc_groups = match.service_description?.exec(
+  const desc_groups = match.service_description?.exec(
     service.service_description
   );
-  let cmd_groups = match.command?.exec(service.check_command);
+  const cmd_groups = match.command?.exec(service.check_command);
 
   // If there was no match, exit
   if (
@@ -52,17 +52,17 @@ export function map_services_to_feeds(
   config: Config,
   services: ServiceDeclaration[]
 ): ServiceExposureMap {
-  let feed_map: ServiceExposureMap = new Map();
+  const feed_map: ServiceExposureMap = new Map();
   for (const service_exposure_block of config.exposures.services) {
     // For each service that matches, we define its feeds
     for (const service of services) {
-      let service_matches = does_service_match(
+      const service_matches = does_service_match(
         service,
         service_exposure_block.match
       );
       if (!service_matches.matches) continue;
       // The fields that string interpolation can use
-      let interpolation_fields = {
+      const interpolation_fields = {
         // Default fields
         host_name: service.host_name,
         service_description: service.service_description,
@@ -73,9 +73,9 @@ export function map_services_to_feeds(
       };
 
       // Constructs the feeds
-      let service_feeds: NagiosFeed[] = [];
+      const service_feeds: NagiosFeed[] = [];
       if (service_exposure_block.feeds.transparent !== undefined) {
-        let feed = service_exposure_block.feeds.transparent;
+        const feed = service_exposure_block.feeds.transparent;
 
         service_feeds.push({
           type: 'service:transparent',
@@ -96,7 +96,7 @@ export function map_services_to_feeds(
         });
       }
       if (service_exposure_block.feeds.diagnostic?.is_running !== undefined) {
-        let feed = service_exposure_block.feeds.diagnostic.is_running;
+        const feed = service_exposure_block.feeds.diagnostic.is_running;
 
         service_feeds.push({
           type: 'service:diagnostic:is_running',
@@ -117,7 +117,7 @@ export function map_services_to_feeds(
         });
       }
       if (service_exposure_block.feeds.plugin?.ping !== undefined) {
-        let feed = service_exposure_block.feeds.plugin.ping;
+        const feed = service_exposure_block.feeds.plugin.ping;
 
         service_feeds.push({
           type: 'service:plugin:ping',

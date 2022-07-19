@@ -19,7 +19,7 @@ export default function start_poll_job(
     logger.info("Polling nagios for status' and syncing with SeeThru");
 
     // Diagnostic info
-    let diagnostics = {
+    const diagnostics = {
       feeds_upserted: 0,
       batches_upserted: 0,
     };

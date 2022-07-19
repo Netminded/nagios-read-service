@@ -12,7 +12,7 @@ interface UpsertFeed {
   color: 'green' | 'amber' | 'red' | 'default';
   message: string;
   dependencies: number[];
-  custom_data: {};
+  custom_data: Record<string, string>;
 }
 
 // Maps a feed and feed result into an UpsertFeed (which can be upserted to the dashboard)
@@ -38,7 +38,7 @@ export async function api_upsert(
   feed: Feed,
   result: FeedResult
 ) {
-  let config = {
+  const config = {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ export async function batch_api_upsert(
   api_token: string,
   feeds: [Feed, FeedResult][]
 ) {
-  let config = {
+  const config = {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',

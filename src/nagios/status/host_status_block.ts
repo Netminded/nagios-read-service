@@ -102,7 +102,7 @@ export default interface HostStatus {
   is_flapping: boolean;
   percent_state_change: number;
   scheduled_downtime_depth: number;
-  custom_variables: {};
+  custom_variables: Record<string, string>;
   // /* custom variables */
   // for(temp_customvariablesmember = temp_host->custom_variables; temp_customvariablesmember != NULL; temp_customvariablesmember = temp_customvariablesmember->next) {
   //   if(temp_customvariablesmember->variable_name)
@@ -114,7 +114,7 @@ export default interface HostStatus {
 export async function parse_host_status(
   rl: AsyncIterableIterator<string>
 ): Promise<HostStatus> {
-  let host_status: HostStatus = <HostStatus>{};
+  const host_status: HostStatus = <HostStatus>{};
   // Manually iterates through the line iterator
   let result = await rl.next();
   while (!result.done) {

@@ -7,7 +7,7 @@ export default interface Feed {
   spaceId: number;
   pageId: number;
   dependencies: number[];
-  custom_data: {};
+  custom_data: Record<string, string>;
 }
 
 export type NagiosFeed = {

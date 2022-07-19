@@ -8,7 +8,7 @@ export default function map_service_to_plugin_ping_feed(
   if (service.state_type === 'hard_state') {
     let colour: 'green' | 'amber' | 'red' | 'default';
     // TODO Message
-    let message = service.plugin_output;
+    const message = service.plugin_output;
 
     if (service.plugin_output.toLowerCase().includes('ok')) {
       colour = 'green';

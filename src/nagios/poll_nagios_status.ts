@@ -16,29 +16,31 @@ export function* map_nagios_status_to_feed(
 ): Generator<[Feed, FeedResult]> {
   switch (status.type) {
     case 'ServiceStatus':
-      const service = status.status;
-      // Gets the feeds exposed by the service
-      const feeds = feed_map.service_map.get(
-        service_map_feed_key_function(service)
-      ) ?? { feeds: [] };
+      {
+        const service = status.status;
+        // Gets the feeds exposed by the service
+        const feeds = feed_map.service_map.get(
+          service_map_feed_key_function(service)
+        ) ?? { feeds: [] };
 
-      // Evaluates the feeds for the service
-      for (const feed of feeds.feeds) {
-        let result: FeedResult | null = null;
-        // Uses the corresponding feed function
-        switch (feed.type) {
-          case 'service:transparent':
-            result = map_service_to_transparent_feed(status.status);
-            break;
-          case 'service:diagnostic:is_running':
-            // TODO, Define status -> feed result map
-            break;
-          case 'service:plugin:ping':
-            result = map_service_to_plugin_ping_feed(status.status);
-            break;
+        // Evaluates the feeds for the service
+        for (const feed of feeds.feeds) {
+          let result: FeedResult | null = null;
+          // Uses the corresponding feed function
+          switch (feed.type) {
+            case 'service:transparent':
+              result = map_service_to_transparent_feed(status.status);
+              break;
+            case 'service:diagnostic:is_running':
+              // TODO, Define status -> feed result map
+              break;
+            case 'service:plugin:ping':
+              result = map_service_to_plugin_ping_feed(status.status);
+              break;
+          }
+          // Yields the result, if it is null (likely due to soft state), we ignore the result
+          if (result !== null) yield [feed.feed, result];
         }
-        // Yields the result, if it is null (likely due to soft state), we ignore the result
-        if (result !== null) yield [feed.feed, result];
       }
       break;
   }

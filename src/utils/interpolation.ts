@@ -7,7 +7,7 @@ export function interpolate_string(
   // Field interpolation
   const field_regex = /(?<!\\)({{\s*\w+\s*}})/g;
   return str.replace(field_regex, (substring) => {
-    let group_name = substring.slice(2, substring.length - 2);
+    const group_name = substring.slice(2, substring.length - 2);
 
     return interpolation_fields[group_name.trim()] ?? ''; // TODO Error if no group exists
   });
@@ -19,7 +19,7 @@ export function interpolate_env_string(str: string): string {
   // Env interpolation
   const env_regex = /(?<!\\)({!\s*\w+\s*!})/g;
   return str.replace(env_regex, (substring) => {
-    let env_name = substring.slice(2, substring.length - 2);
+    const env_name = substring.slice(2, substring.length - 2);
 
     return process.env[env_name.trim()] || ''; // TODO Error if no env var exists
   });

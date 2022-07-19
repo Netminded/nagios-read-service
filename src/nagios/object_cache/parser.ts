@@ -12,7 +12,7 @@ export type NagiosObjectDeclaration = {
 export async function parse_block(
   rl: AsyncIterableIterator<string>
 ): Promise<{ [key: string]: string }> {
-  let key_values: { [key: string]: string } = {};
+  const key_values: { [key: string]: string } = {};
   // Manually iterates through the line iterator
   let result = await rl.next();
   while (!result.done && result.value.trim() !== '}') {
@@ -58,10 +58,12 @@ export async function* parse_object_cache(
           await parse_block(iterator);
           break;
         case 'define service {':
-          let service = await parse_block(iterator);
-          const { error, value } = service_schema.validate(service);
-          if (error === undefined) yield { type: 'service', service: value };
-          else throw error;
+          {
+            const service = await parse_block(iterator);
+            const { error, value } = service_schema.validate(service);
+            if (error === undefined) yield { type: 'service', service: value };
+            else throw error;
+          }
           break;
         case 'define servicedependency {':
           await parse_block(iterator);
@@ -97,11 +99,14 @@ export interface NagiosObjects {
 export async function collect_nagios_objects(
   stream: ReadStream
 ): Promise<NagiosObjects> {
-  let objects: NagiosObjects = { services: [] };
+  const objects: NagiosObjects = { services: [] };
   for await (const cached_object of parse_object_cache(stream)) {
-    if (cached_object === null) {
-    } else if (cached_object.type === 'service') {
-      objects.services.push(cached_object.service);
+    if (cached_object !== null) {
+      switch (cached_object.type) {
+        case 'service':
+          objects.services.push(cached_object.service);
+          break;
+      }
     }
   }
   return objects;

@@ -105,14 +105,14 @@ export default interface ServiceStatus {
   percent_state_change: number;
   scheduled_downtime_depth: number;
   /* custom variables */
-  custom_variables: {};
+  custom_variables: Record<string, string>;
 }
 
 // Consumes lines from the status_file until a service status section has been parsed
 export async function parse_service_status(
   rl: AsyncIterableIterator<string>
 ): Promise<ServiceStatus> {
-  let service_status: ServiceStatus = <ServiceStatus>{};
+  const service_status: ServiceStatus = <ServiceStatus>{};
   // Manually iterates through the line iterator
   let result = await rl.next();
   while (!result.done) {

@@ -14,7 +14,7 @@ export interface ApiKeys {
 
 // Extracts the api keys from the config file
 export function extract_api_keys(config: Config): ApiKeys {
-  let api_keys: ApiKeys = {};
+  const api_keys: ApiKeys = {};
   for (const name in config.api.keys) {
     api_keys[name] = config.api.keys[name];
   }

@@ -153,9 +153,9 @@ export default interface Config {
           page: { id: number };
           space: { id: number };
           // The naming scheme of the transparent feed for these services
-          name: any;
+          name: string;
           // The description, defaults to the service description
-          description: any;
+          description: string;
         };
         diagnostic?: {
           // Do these services expose a 'is_running' diagnostic feed?
@@ -167,9 +167,9 @@ export default interface Config {
             page: { id: number };
             space: { id: number };
             // The naming scheme of the is_running diagnostic feed for these services
-            name: any;
+            name: string;
             // The description, defaults to the service description
-            description: any;
+            description: string;
           };
         };
         plugin?: {
@@ -182,31 +182,21 @@ export default interface Config {
             page: { id: number };
             space: { id: number };
             // The naming scheme of the ping plugin feed for these services
-            name: any;
+            name: string;
             // The description, defaults to the service description
-            description: any;
+            description: string;
           };
         };
       };
     }[];
     //
-    hosts: {}[];
+    hosts: Record<string, unknown>[];
   };
 }
 
 export function parse_config_file(config_string: string): Config {
   const config = toml.parse(config_string);
-  // @ts-ignore
-  const {
-    error,
-    value,
-  }:
-    | { error: undefined; warning?: Joi.ValidationError; value: Config }
-    | {
-        error: Joi.ValidationError;
-        warning?: Joi.ValidationError;
-        value: Config;
-      } = config_schema.validate(config);
+  const { error, value } = config_schema.validate(config);
   if (error === undefined) {
     return value;
   } else {

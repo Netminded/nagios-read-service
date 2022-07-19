@@ -59,11 +59,11 @@ export function check_option_to_enum(check_option: string):
       orphan_check: boolean;
       dependency_check: boolean;
     } {
-  let byte = Number.parseInt(check_option);
+  const byte = Number.parseInt(check_option);
   if (byte == 0) {
     return 'none';
   } else {
-    let parsed = {
+    const parsed = {
       force_execution: false,
       freshness_check: false,
       orphan_check: false,

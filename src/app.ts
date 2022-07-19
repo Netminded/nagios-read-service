@@ -25,7 +25,7 @@ import { interpolate_env_string } from './utils/interpolation';
 async function get_config(config_file_path: string): Promise<Config | null> {
   try {
     // Loads the config
-    let config = parse_config_file(
+    const config = parse_config_file(
       fs.readFileSync(config_file_path, {
         encoding: 'utf-8',
       })
@@ -88,7 +88,7 @@ async function handle_batch_upsert(
     }
   } else {
     logger.info('Batch upserting feeds');
-    let key_batches: { [key: string]: [Feed, FeedResult][] } = {};
+    const key_batches: { [key: string]: [Feed, FeedResult][] } = {};
     for (const name in api_keys) key_batches[name] = [];
     // Sorts the batch into their respective api key batches
     for (const [feed, result] of feeds) {
@@ -97,11 +97,11 @@ async function handle_batch_upsert(
 
     // Batch upserts each feed
     for (const name in key_batches) {
-      let token = api_keys[name].token;
+      const token = api_keys[name].token;
       if (token === undefined) continue;
 
       // Gets the batch
-      let batch = key_batches[name];
+      const batch = key_batches[name];
 
       await batch_api_upsert(new URL(config.api.upsert_endpoint), token, batch);
     }
@@ -110,7 +110,7 @@ async function handle_batch_upsert(
 
 // Entrypoint
 async function start(config_file_path: string, dry_run: boolean) {
-  let config = await get_config(config_file_path);
+  const config = await get_config(config_file_path);
   if (config === null) return;
 
   logger.debug({
@@ -127,10 +127,10 @@ async function start(config_file_path: string, dry_run: boolean) {
   });
 
   // Loads the nagios object cache
-  let nagios_objects = await get_nagios_objects(nagios_config);
+  const nagios_objects = await get_nagios_objects(nagios_config);
   if (nagios_objects === null) return;
   // Calculates the mapping of service to feeds
-  let service_feed_map = await map_services_to_feeds(
+  const service_feed_map = await map_services_to_feeds(
     config,
     nagios_objects.services
   );
@@ -139,7 +139,7 @@ async function start(config_file_path: string, dry_run: boolean) {
   });
 
   // Api Key management
-  let api_keys: ApiKeys = extract_api_keys(config);
+  const api_keys: ApiKeys = extract_api_keys(config);
   // Refreshes tokens
   if (!dry_run) start_refresh_token_job(config, api_keys);
 
@@ -155,8 +155,7 @@ async function start(config_file_path: string, dry_run: boolean) {
       service_map: service_feed_map,
     },
     async (feeds) => {
-      if (config !== null)
-        await handle_batch_upsert(config, api_keys, dry_run, feeds);
+      await handle_batch_upsert(config, api_keys, dry_run, feeds);
     }
   );
 }
@@ -182,8 +181,9 @@ yargs(hideBin(process.argv))
       });
     },
     (argv) => {
-      // @ts-ignore
-      start(argv.config, argv.dryRun).then(() => {});
+      start(<string>argv.config, <boolean>argv.dryRun).then(() => {
+        logger.info('Closing');
+      });
     }
   )
   .demandCommand()
