@@ -45,7 +45,7 @@ export default function start_poll_job(
       diagnostics.feeds_upserted += batch.length;
       diagnostics.batches_upserted += 1;
     }
-    logger.debug(
+    logger.info(
       `Upserted (${diagnostics.feeds_upserted}) feeds with (${diagnostics.batches_upserted}) batch(es)`
     );
   });

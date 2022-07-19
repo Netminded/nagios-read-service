@@ -44,7 +44,9 @@ const config_schema = Joi.object({
         }).required()
       )
       .required(),
-  }).required(),
+  })
+    .required()
+    .with('keys', 'keys.default'),
   exposures: Joi.object({
     services: Joi.array()
       .items(
@@ -101,6 +103,17 @@ const config_schema = Joi.object({
   }).required(),
 });
 
+type ApiKey = {
+  type: 'jwt';
+  // The two credentials needed to generate jwts, these may be interpolated at a later stage
+  // with env interpolation, i.e. occurrences of {! <ENV_NAME> !} get replaced
+  // with the env variable named <ENV_NAME>.
+  //
+  // These should be interpolated on demand, never stored in the config itself
+  secret_key: string;
+  uuid: string;
+};
+
 export default interface Config {
   nagios_config_file_path: string;
   poll_cron: number;
@@ -114,12 +127,8 @@ export default interface Config {
     // Named api keys, as they are named, different api keys, and/or types can be
     // used for different feeds. You should always have a default
     keys: {
-      [key: string]: {
-        type: 'jwt';
-        // The two credentials needed to generate jwts
-        secret_key: string;
-        uuid: string;
-      };
+      default: ApiKey;
+      [key: string]: ApiKey;
     };
   };
   // Defines how services are mapped to feeds
@@ -187,7 +196,17 @@ export default interface Config {
 
 export function parse_config_file(config_string: string): Config {
   const config = toml.parse(config_string);
-  const { error, value } = config_schema.validate(config);
+  // @ts-ignore
+  const {
+    error,
+    value,
+  }:
+    | { error: undefined; warning?: Joi.ValidationError; value: Config }
+    | {
+        error: Joi.ValidationError;
+        warning?: Joi.ValidationError;
+        value: Config;
+      } = config_schema.validate(config);
   if (error === undefined) {
     return value;
   } else {

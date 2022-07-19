@@ -89,7 +89,7 @@ export function map_services_to_feeds(
             ),
             integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.check_command}:${service.service_description}@${service.host_name}`,
             name: interpolate_string(feed.name, interpolation_fields),
-            organisationId: 0, // TODO Organisation
+            organisationId: feed.organisation.id,
             pageId: feed.page.id,
             spaceId: feed.space.id,
           },
@@ -110,7 +110,7 @@ export function map_services_to_feeds(
             ),
             integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.check_command}:${service.service_description}@${service.host_name}`,
             name: interpolate_string(feed.name, interpolation_fields),
-            organisationId: 0, // TODO Organisation
+            organisationId: feed.organisation.id,
             pageId: feed.page.id,
             spaceId: feed.space.id,
           },
@@ -131,7 +131,7 @@ export function map_services_to_feeds(
             ),
             integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.check_command}:${service.service_description}@${service.host_name}`,
             name: interpolate_string(feed.name, interpolation_fields),
-            organisationId: 0, // TODO Organisation
+            organisationId: feed.organisation.id,
             pageId: feed.page.id,
             spaceId: feed.space.id,
           },

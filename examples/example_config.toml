@@ -4,11 +4,12 @@ batch_size = 50
 
 [api]
 upsert_endpoint = "https://api.seethrunetworks.com/api/v3/feed/update"
+jwt_key_refresh_endpoint = "httpa://api.seethrunetworks.com/api/token"
 
 [api.keys.default]
 type = "jwt"
-secret_key = "{{ api_key_secret_key }}"
-uuid = "{{ api_key_uuid }}"
+secret_key = "{! API_KEY_SECRET_KEY !}"
+uuid = "{! API_KEY_UUID !}"
 
 # Will expose the diagnostics feeds of services
 [[exposures.services]]

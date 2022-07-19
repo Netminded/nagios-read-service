@@ -1,6 +1,7 @@
 import Config from '../config/config';
 import axios from 'axios';
 import { logger } from '../utils/logger';
+import { interpolate_env_string } from '../utils/interpolation';
 
 export interface ApiKeys {
   [key: string]: {
@@ -11,6 +12,7 @@ export interface ApiKeys {
   };
 }
 
+// Extracts the api keys from the config file
 export function extract_api_keys(config: Config): ApiKeys {
   let api_keys: ApiKeys = {};
   for (const name in config.api.keys) {
@@ -19,6 +21,7 @@ export function extract_api_keys(config: Config): ApiKeys {
   return api_keys;
 }
 
+// Refreshes a jwt api token
 export async function refresh_jwt_token(
   jwt_refresh_token_endpoint: string,
   name: string,
@@ -26,8 +29,8 @@ export async function refresh_jwt_token(
   uuid: string
 ): Promise<string | null> {
   const result = await axios.post(jwt_refresh_token_endpoint, {
-    secret_key: secret_key,
-    uuid: uuid,
+    secret_key: interpolate_env_string(secret_key), // Interpolates the string on demand
+    uuid: interpolate_env_string(uuid), // Interpolates the string on demand
   });
   if (!result || !result?.data?.token) {
     logger.error(`Could not refresh jwt (named: ${name}) from dashboard`);

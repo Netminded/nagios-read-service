@@ -19,6 +19,7 @@ import { ApiKeys, extract_api_keys } from './dashboard_api/api_key';
 import FeedResult from './feeds/feed_result';
 import Feed from './feeds/feed';
 import { batch_api_upsert } from './dashboard_api/upsert';
+import { interpolate_env_string } from './utils/interpolation';
 
 // Gets the config from the config file
 async function get_config(config_file_path: string): Promise<Config | null> {
@@ -71,10 +72,51 @@ async function get_nagios_objects(
   }
 }
 
+async function handle_batch_upsert(
+  config: Config,
+  api_keys: ApiKeys,
+  dry_run: boolean,
+  feeds: [Feed, FeedResult][]
+) {
+  if (dry_run) {
+    for (const [feed, result] of feeds) {
+      logger.info({
+        message: '[Dry] Upserting feed: ',
+        feed: feed,
+        result: result,
+      });
+    }
+  } else {
+    logger.info('Batch upserting feeds');
+    let key_batches: { [key: string]: [Feed, FeedResult][] } = {};
+    for (const name in api_keys) key_batches[name] = [];
+    // Sorts the batch into their respective api key batches
+    for (const [feed, result] of feeds) {
+      key_batches[feed.api_key_name].push([feed, result]);
+    }
+
+    // Batch upserts each feed
+    for (const name in key_batches) {
+      let token = api_keys[name].token;
+      if (token === undefined) continue;
+
+      // Gets the batch
+      let batch = key_batches[name];
+
+      await batch_api_upsert(new URL(config.api.upsert_endpoint), token, batch);
+    }
+  }
+}
+
 // Entrypoint
 async function start(config_file_path: string, dry_run: boolean) {
   let config = await get_config(config_file_path);
   if (config === null) return;
+
+  logger.debug({
+    message: 'Api Keys: ',
+    keys: config.api.keys,
+  });
 
   // Reads the nagios config file
   const nagios_config = await parse_nagios_config_file(
@@ -96,11 +138,16 @@ async function start(config_file_path: string, dry_run: boolean) {
     message: `Mapped services to feeds; found ${service_feed_map.size} mappings`,
   });
 
+  // Api Key management
   let api_keys: ApiKeys = extract_api_keys(config);
-
   // Refreshes tokens
-  start_refresh_token_job(config, api_keys);
+  if (!dry_run) start_refresh_token_job(config, api_keys);
 
+  logger.debug(
+    `secret_key: ${interpolate_env_string(api_keys.default.secret_key)}`
+  );
+
+  // Starts the actual nagios polling
   start_poll_job(
     config,
     nagios_config,
@@ -108,43 +155,13 @@ async function start(config_file_path: string, dry_run: boolean) {
       service_map: service_feed_map,
     },
     async (feeds) => {
-      if (dry_run) {
-        for (const [feed, result] of feeds) {
-          logger.info({
-            message: '[Dry] Upserting feed: ',
-            feed: feed,
-            result: result,
-          });
-        }
-      } else {
-        let key_batches: { [key: string]: [Feed, FeedResult][] } = {};
-        for (const name in api_keys) key_batches[name] = [];
-        // Sorts the batch into their respective api key batches
-        for (const [feed, result] of feeds) {
-          key_batches[feed.api_key_name].push([feed, result]);
-        }
-
-        // Batch upserts each feed
-        for (const name in key_batches) {
-          if (config === null) return;
-
-          let token = api_keys[name].token;
-          if (token === undefined) continue;
-
-          // Gets the batch
-          let batch = key_batches[name];
-
-          await batch_api_upsert(
-            new URL(config.api.upsert_endpoint),
-            token,
-            batch
-          );
-        }
-      }
+      if (config !== null)
+        await handle_batch_upsert(config, api_keys, dry_run, feeds);
     }
   );
 }
 
+// Parses the command line arguments
 yargs(hideBin(process.argv))
   .command(
     'start',
