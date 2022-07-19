@@ -1,6 +1,5 @@
 import Config from '../config/config';
 import axios from 'axios';
-import { logger } from '../utils/logger';
 import { interpolate_env_string } from '../utils/interpolation';
 
 export interface ApiKeys {
@@ -14,7 +13,7 @@ export interface ApiKeys {
 
 // Extracts the api keys from the config file
 export function extract_api_keys(config: Config): ApiKeys {
-  let api_keys: ApiKeys = {};
+  const api_keys: ApiKeys = {};
   for (const name in config.api.keys) {
     api_keys[name] = config.api.keys[name];
   }
@@ -32,9 +31,16 @@ export async function refresh_jwt_token(
     secret_key: interpolate_env_string(secret_key), // Interpolates the string on demand
     uuid: interpolate_env_string(uuid), // Interpolates the string on demand
   });
-  if (!result || !result?.data?.token) {
-    logger.error(`Could not refresh jwt (named: ${name}) from dashboard`);
-    return null;
+  if (result.status === 404)
+    throw Error(
+      `Api refresh jwt endpoint '${jwt_refresh_token_endpoint}' does not exist`
+    );
+  else if (result.status !== 200)
+    throw Error(`Api upsert endpoint returned non 200 response`);
+  else if (!result.data.status) {
+    throw Error(
+      `Could not refresh jwt (named: ${name}) from dashboaord, received response: ${result.data.message}`
+    );
   }
   return result.data.token;
 }

@@ -11,15 +11,14 @@ export interface NagiosConfig {
 export default async function parse_nagios_config_file(
   config_file: ReadStream
 ): Promise<NagiosConfig> {
-  // @ts-ignore
-  let nagios_config = <NagiosConfig>{
-    object_cache_file: null,
-    status_file: null,
+  const nagios_config = {
+    object_cache_file: '',
+    status_file: '',
   };
   // Parses the file
   const rl = readline.createInterface(config_file);
   for await (const l of rl) {
-    let line = l.trim();
+    const line = l.trim();
     // The only two cases we care about
     if (line.startsWith('object_cache_file=')) {
       nagios_config.object_cache_file = line.split('object_cache_file=')[1];
@@ -28,9 +27,9 @@ export default async function parse_nagios_config_file(
     }
   }
   // Validates the response
-  if (nagios_config.status_file === null) {
+  if (nagios_config.status_file === '') {
     throw new Error('Invalid nagios config file; missing `status_file`');
-  } else if (nagios_config.object_cache_file === null) {
+  } else if (nagios_config.object_cache_file === '') {
     throw new Error('Invalid nagios config file; missing `object_cache_file`');
   } else {
     return nagios_config;

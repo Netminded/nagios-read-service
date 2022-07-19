@@ -29,37 +29,40 @@ All services defined in nagios can be exposed as these feeds.
 Which services get exposed gets defined in the config file
 
 ## The config file
-You need to tell the service where the config file can be found, this can be done with the `-c` or `--config` cli 
-flag. If the flag isn't provided, then the service looks for the config file 
+
+You need to tell the service where the config file can be found, this can be done with the `-c` or `--config` cli
+flag. If the flag isn't provided, then the service looks for the config file
 at `/etc/netminded/nagios-read-service/config.toml`.
 
 The config file format is toml.
 
 ### Global options
 
- - `nagios_config_file_path`: The full path (or relative to the current working directory) to the nagios config file, 
-defaults to `/usr/local/nagios/etc/nagios.etc`.
- - `poll_cron`: The cron determining how often nagios should be polled for the status of objects. 
-This has no default, a reasonable rate would be `* * * * *`, i.e. every minute. 
-A useful tool for this is https://crontab.guru/
- - `batch_size`: Feed result upserts (uploads) to the dashboard are batched, i.e. the service will accumulate 
-evaluated feeds, and submit them all at once. This parameter determines how many feeds to batch together before upserting.
-This defaults to 25 feeds.
+- `nagios_config_file_path`: The full path (or relative to the current working directory) to the nagios config file,
+  defaults to `/usr/local/nagios/etc/nagios.etc`.
+- `poll_cron`: The cron determining how often nagios should be polled for the status of objects.
+  This has no default, a reasonable rate would be `* * * * *`, i.e. every minute.
+  A useful tool for this is https://crontab.guru/
+- `batch_size`: Feed result upserts (uploads) to the dashboard are batched, i.e. the service will accumulate
+  evaluated feeds, and submit them all at once. This parameter determines how many feeds to batch together before upserting.
+  This defaults to 25 feeds.
 
 ### Exposure blocks
-Every service/host gets a set of feeds that it can 'expose', i.e. feeds that the service/host can evaluate to. 
-By default, no service/host exposes a feed (i.e. no service/host maps to a feed). And so the set of feeds that get 
-exposed by services/hosts needs to be defined in the config file. 
+
+Every service/host gets a set of feeds that it can 'expose', i.e. feeds that the service/host can evaluate to.
+By default, no service/host exposes a feed (i.e. no service/host maps to a feed). And so the set of feeds that get
+exposed by services/hosts needs to be defined in the config file.
 
 Rather than defining each feed that a service/host exposes individually, there is this concept of an 'exposure block'.
 In an 'exposure block' you:
 
- 1. Select a set of services/hosts, and
- 2. Define the feeds that all the services/hosts selected will expose
+1.  Select a set of services/hosts, and
+2.  Define the feeds that all the services/hosts selected will expose
 
 And so, rather than defining feeds individually, you define lots at the same time.
 
 Here is how it is done:
+
 ```toml
 # Defines a **service** exposure block, you can have many of these
 [[exposures.services]]
@@ -81,8 +84,8 @@ Here is how it is done:
     # How should the feed be named? As we are defining many feeds at the same time, the name of the feed has a feature
     # called string interpolation. i.e. The name of this feed for a particular service will be this string but with
     # all `{{ <field> }}` sections replaced with the value that <field> points to.
-    # By default, <field> can be any of `host_name`, `service_description`, `check_command`, and/or `display_name`. 
-    # <fiield> can also be a named group from any of the regexes in the match part 
+    # By default, <field> can be any of `host_name`, `service_description`, `check_command`, and/or `display_name`.
+    # <fiield> can also be a named group from any of the regexes in the match part
     name = "Diagnostic Feed for {{ service_description }}"
     # Similar to name, however this field defaults to the service's description, and so may be ommitted.
     message = "{{ service_description }}"
@@ -96,6 +99,7 @@ Here is how it is done:
 ```
 
 ### Example
+
 ```toml
 nagios_config_file_path = "./examples/nagios/nagios.cfg"
 poll_cron = "* * * * *"
@@ -142,7 +146,6 @@ batch_size = 50
     name = "PING"
 ```
 
-
 ## Development
 
 This section assumes that you already have a node environment setup
@@ -183,20 +186,18 @@ To format the project: `npm run fmt` or `npm run prettier`
 
 ### Download
 
- 1. You first need to download the latest release, TODO (Link)
+1.  You first need to download the latest release, TODO (Link)
     1. With curl
     2. With wget
- 2. Unzip the directory
- 3. Once in the directory, you need to install the dependencies `npm install --production`
+2.  Unzip the directory
+3.  Once in the directory, you need to install the dependencies `npm install --production`
 
-At this point, the component is ready to run with `npm run start`. 
-However, for running in production, see [Running](#running-1) 
+At this point, the component is ready to run with `npm run start`.
+However, for running in production, see [Running](#running-1)
 
 ## Running
 
 ### systemd (Preferred)
-
-
 
 ### Docker
 
