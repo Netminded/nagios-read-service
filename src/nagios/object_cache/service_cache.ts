@@ -92,3 +92,12 @@ export default interface ServiceDeclaration {
   retain_status_information: boolean;
   retain_nonstatus_information: boolean;
 }
+
+// Uniquely identifies the service
+export type UniqueServiceId = string;
+export function get_unique_service_id(service: {
+  host_name: string;
+  service_description: string;
+}): UniqueServiceId {
+  return `${service.service_description}@${service.host_name}`;
+}

@@ -96,3 +96,9 @@ export interface HostDeclaration {
   retain_status_information: boolean;
   retain_nonstatus_information: boolean;
 }
+
+// Uniquely identifies the host
+export type UniqueHostId = string;
+export function get_unique_host_id(host: { host_name: string }): UniqueHostId {
+  return host.host_name;
+}

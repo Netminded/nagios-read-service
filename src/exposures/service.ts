@@ -1,25 +1,22 @@
 import Feed from '../feeds/feed';
 import Config from '../config/config';
-import ServiceDeclaration from '../nagios/object_cache/service_cache';
+import ServiceDeclaration, {
+  get_unique_service_id,
+  UniqueServiceId,
+} from '../nagios/object_cache/service_cache';
 import { interpolate_string } from '../utils/interpolation';
+import { ExposureMap } from './exposures';
+import { get_unique_host_id } from '../nagios/object_cache/host_cache';
+import { NagiosObjects } from '../nagios/object_cache/parser';
 
-// The key is a combination of the service description and hash name
-// i.e. key = `${check_command}:${service_description}@${host_name}`
-export type ServiceExposureMap = Map<
-  string,
+export type ServiceExposures = Map<
+  UniqueServiceId,
   {
     transparent?: Feed;
     diagnostic: { is_running?: Feed };
     plugin: { ping?: Feed };
   }
 >;
-export const service_map_feed_key_function = (service: {
-  check_command: string;
-  service_description: string;
-  host_name: string;
-}): string => {
-  return `${service.check_command}:${service.service_description}@${service.host_name}`;
-};
 
 // Checks if a service matches a Service Match block
 function does_service_match(
@@ -68,12 +65,12 @@ function does_service_match(
 // Figures out which feeds a service should expose
 export function map_services_to_feeds(
   config: Config,
-  services: ServiceDeclaration[]
-): ServiceExposureMap {
-  const feed_map: ServiceExposureMap = new Map();
+  services: Map<UniqueServiceId, ServiceDeclaration>
+): ServiceExposures {
+  const feed_map: ServiceExposures = new Map();
   for (const service_exposure_block of config.exposures.services ?? []) {
     // For each service that matches, we define its feeds
-    for (const service of services) {
+    for (const [_, service] of services) {
       const service_matches = does_service_match(
         service,
         service_exposure_block.match
@@ -91,7 +88,7 @@ export function map_services_to_feeds(
       };
 
       // Constructs the feeds
-      let service_feeds = {
+      const service_feeds = {
         transparent: <Feed | undefined>undefined,
         diagnostic: { is_running: <Feed | undefined>undefined },
         plugin: { ping: <Feed | undefined>undefined },
@@ -103,12 +100,12 @@ export function map_services_to_feeds(
         service_feeds.transparent = {
           custom_data: {},
           api_key_name: feed.api_key,
-          dependencies: [],
+          dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
           description: interpolate_string(
             feed.description,
             interpolation_fields
           ),
-          integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.check_command}:${service.service_description}@${service.host_name}`,
+          integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.service_description}@${service.host_name}`,
           name: interpolate_string(feed.name, interpolation_fields),
           organisationId: feed.organisation.id,
           pageId: feed.page.id,
@@ -121,12 +118,12 @@ export function map_services_to_feeds(
         service_feeds.diagnostic.is_running = {
           custom_data: {},
           api_key_name: feed.api_key,
-          dependencies: [],
+          dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
           description: interpolate_string(
             feed.description,
             interpolation_fields
           ),
-          integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.check_command}:${service.service_description}@${service.host_name}`,
+          integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.service_description}@${service.host_name}`,
           name: interpolate_string(feed.name, interpolation_fields),
           organisationId: feed.organisation.id,
           pageId: feed.page.id,
@@ -139,12 +136,12 @@ export function map_services_to_feeds(
         service_feeds.plugin.ping = {
           custom_data: {},
           api_key_name: feed.api_key,
-          dependencies: [],
+          dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
           description: interpolate_string(
             feed.description,
             interpolation_fields
           ),
-          integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.check_command}:${service.service_description}@${service.host_name}`,
+          integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.service_description}@${service.host_name}`,
           name: interpolate_string(feed.name, interpolation_fields),
           organisationId: feed.organisation.id,
           pageId: feed.page.id,
@@ -152,8 +149,49 @@ export function map_services_to_feeds(
         };
       }
       // Sets up the feeds
-      feed_map.set(service_map_feed_key_function(service), service_feeds);
+      feed_map.set(get_unique_service_id(service), service_feeds);
     }
   }
   return feed_map;
+}
+
+// Calculates the dependencies of all service feeds, and updates them in-place
+export function make_service_dependencies(
+  objects: NagiosObjects,
+  exposure_map: ExposureMap
+) {
+  // Key is a UniqueServiceId
+  for (const [key, feeds] of exposure_map.service_map) {
+    // Gets this iteration's service
+    const service = objects.services.get(key);
+    if (service === undefined) continue;
+
+    // Gets the service's associated host feeds
+    const host_feeds = exposure_map.host_map.get(get_unique_host_id(service));
+
+    // The integration ids of the dependencies
+    const dependencies: string[] = [];
+    // If the host has any dependencies for the 'status' feed, each feed of this service also depends on them
+    if (host_feeds?.status_feed !== undefined) {
+      dependencies.push(...host_feeds.status_feed.dependencies);
+      dependencies.push(host_feeds.status_feed.integration_id);
+    }
+
+    // If the service has an 'Is Running?' feed, we include it as a dependency
+    // Update the dependencies of each feed
+    if (feeds.transparent !== undefined)
+      feeds.transparent.dependencies = dependencies.concat(
+        feeds.diagnostic.is_running === undefined
+          ? []
+          : feeds.diagnostic.is_running.integration_id
+      );
+    if (feeds.diagnostic.is_running !== undefined)
+      feeds.diagnostic.is_running.dependencies = dependencies;
+    if (feeds.plugin.ping !== undefined)
+      feeds.plugin.ping.dependencies = dependencies.concat(
+        feeds.diagnostic.is_running === undefined
+          ? []
+          : feeds.diagnostic.is_running.integration_id
+      );
+  }
 }

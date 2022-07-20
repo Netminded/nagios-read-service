@@ -6,6 +6,6 @@ export default interface Feed {
   organisationId: number;
   spaceId: number;
   pageId: number;
-  dependencies: number[];
+  dependencies: string[];
   custom_data: Record<string, string>;
 }

@@ -1,17 +1,17 @@
 // Polls nagios for the latest status information
-import { service_map_feed_key_function } from '../exposures/service';
 import fs from 'fs';
 import { NagiosStatus, parse_nagios_status_file } from './status/parser';
 import FeedResult from '../feeds/feed_result';
 import map_service_to_transparent_feed from '../feeds/service_status/transparent';
 import Feed from '../feeds/feed';
 import { ExposureMap } from '../exposures/exposures';
-import { host_map_feed_key_function } from '../exposures/host';
 import { map_host_to_status_feed } from '../feeds/host_status/status';
+import { get_unique_service_id } from './object_cache/service_cache';
+import { get_unique_host_id } from './object_cache/host_cache';
 
 // Maps a nagios status to a bunch of feed results, each result is yielded for
 // a calling function to handle
-export function* map_nagios_status_to_feed(
+function* map_nagios_status_to_feed(
   status: NagiosStatus,
   feed_map: ExposureMap
 ): Generator<[Feed, FeedResult]> {
@@ -20,9 +20,7 @@ export function* map_nagios_status_to_feed(
       {
         const service = status.status;
         // Gets the feeds exposed by the service
-        const feeds = feed_map.service_map.get(
-          service_map_feed_key_function(service)
-        );
+        const feeds = feed_map.service_map.get(get_unique_service_id(service));
         if (feeds === undefined) return;
 
         // Evaluates the feeds for the service
@@ -44,7 +42,7 @@ export function* map_nagios_status_to_feed(
       {
         const host = status.status;
         // Gets the feeds exposed by the host
-        const feeds = feed_map.host_map.get(host_map_feed_key_function(host));
+        const feeds = feed_map.host_map.get(get_unique_host_id(host));
         if (feeds === undefined) return;
 
         // Evaluates the feeds for the host

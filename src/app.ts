@@ -9,17 +9,16 @@ import {
   NagiosObjects,
 } from './nagios/object_cache/parser';
 import parse_nagios_config_file, { NagiosConfig } from './nagios/config/parser';
-import { map_services_to_feeds } from './exposures/service';
-import start_poll_job from './jobs/poll_nagios';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import path from 'path';
-import start_refresh_token_job from './jobs/refresh_token';
 import { ApiKeys, extract_api_keys } from './dashboard_api/api_key';
 import FeedResult from './feeds/feed_result';
 import Feed from './feeds/feed';
 import { batch_api_upsert } from './dashboard_api/upsert';
-import { map_host_to_feeds } from './exposures/host';
+import { map_exposures } from './exposures/exposures';
+import start_refresh_token_job from './jobs/refresh_token';
+import start_poll_job from './jobs/poll_nagios';
 
 // Gets the config from the config file, handles any errors
 // If this function fails to return Config, then the process should exit
@@ -194,17 +193,13 @@ async function start(config_file_path: string, dry_run: boolean) {
   const nagios_objects = await get_nagios_objects(nagios_config);
   if (nagios_objects === undefined) return;
 
-  // Calculates the mapping of service to feeds
-  const service_feed_map = await map_services_to_feeds(
-    config,
-    nagios_objects.services
-  );
-  logger.info(
-    `Mapped services to feeds; found ${service_feed_map.size} mappings`
-  );
-  // Calculates the mapping of hosts to feeds
-  const host_feed_map = await map_host_to_feeds(config, nagios_objects.hosts);
-  logger.info(`Mapped hosts to feeds; found ${host_feed_map.size} mappings`);
+  // Gets the feeds
+  const feeds = map_exposures(config, nagios_objects);
+  logger.debug({
+    message: 'Feed exposures: ',
+    service_map: [...feeds.service_map.entries()],
+    host_map: [...feeds.host_map.entries()],
+  });
 
   // Api Key management
   const api_keys: ApiKeys = extract_api_keys(config);
@@ -212,17 +207,9 @@ async function start(config_file_path: string, dry_run: boolean) {
   if (!dry_run) start_refresh_token_job(config, api_keys);
 
   // Starts the actual nagios polling
-  start_poll_job(
-    config,
-    nagios_config,
-    {
-      service_map: service_feed_map,
-      host_map: host_feed_map,
-    },
-    async (feeds) => {
-      await handle_batch_upsert(config, api_keys, dry_run, feeds);
-    }
-  );
+  start_poll_job(config, nagios_config, feeds, async (feeds) => {
+    await handle_batch_upsert(config, api_keys, dry_run, feeds);
+  });
 }
 
 // Parses the command line arguments

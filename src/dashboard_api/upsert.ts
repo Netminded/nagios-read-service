@@ -12,7 +12,7 @@ interface UpsertFeed {
   pageId: number;
   color: 'green' | 'amber' | 'red' | 'default';
   message: string;
-  dependencies: number[];
+  dependencies: string[];
   custom_data: Record<string, string>;
 }
 
