@@ -2,7 +2,7 @@ import {
   acknowledgement_type_to_enum,
   check_option_to_enum,
   check_type_number_to_enum,
-  state_num_to_enum,
+  service_state_num_to_enum,
   state_type_to_enum,
 } from './parser_utils';
 
@@ -171,11 +171,11 @@ export async function parse_service_status(
         line.split('check_type=')[1]
       );
     } else if (line.startsWith('current_state')) {
-      service_status['current_state'] = state_num_to_enum(
+      service_status['current_state'] = service_state_num_to_enum(
         line.split('current_state=')[1]
       );
     } else if (line.startsWith('last_hard_state')) {
-      service_status['last_hard_state'] = state_num_to_enum(
+      service_status['last_hard_state'] = service_state_num_to_enum(
         line.split('last_hard_state=')[1]
       );
     } else if (line.startsWith('last_event_id')) {

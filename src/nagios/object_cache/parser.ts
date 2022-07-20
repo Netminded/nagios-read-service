@@ -3,11 +3,17 @@ import { ReadStream } from 'fs';
 import readline from 'readline';
 import { logger } from '../../utils/logger';
 import ServiceDeclaration, { service_schema } from './service_cache';
+import { host_schema, HostDeclaration } from './host_cache';
 
-export type NagiosObjectDeclaration = {
-  type: 'service';
-  service: ServiceDeclaration;
-};
+export type NagiosObjectDeclaration =
+  | {
+      type: 'service';
+      service: ServiceDeclaration;
+    }
+  | {
+      type: 'host';
+      host: HostDeclaration;
+    };
 
 export async function parse_block(
   rl: AsyncIterableIterator<string>
@@ -55,7 +61,12 @@ export async function* parse_object_cache(
           await parse_block(iterator);
           break;
         case 'define host {':
-          await parse_block(iterator);
+          {
+            const host = await parse_block(iterator);
+            const { error, value } = host_schema.validate(host);
+            if (error === undefined) yield { type: 'host', host: value };
+            else throw error;
+          }
           break;
         case 'define service {':
           {
@@ -93,19 +104,22 @@ export async function* parse_object_cache(
 
 export interface NagiosObjects {
   services: ServiceDeclaration[];
+  hosts: HostDeclaration[];
 }
 
 // A wrapper around `parse_object_cache` to collect all nagios objects into a simple data structure
 export async function collect_nagios_objects(
   stream: ReadStream
 ): Promise<NagiosObjects> {
-  const objects: NagiosObjects = { services: [] };
+  const objects: NagiosObjects = { services: [], hosts: [] };
   for await (const cached_object of parse_object_cache(stream)) {
     if (cached_object !== null) {
       switch (cached_object.type) {
         case 'service':
           objects.services.push(cached_object.service);
           break;
+        case 'host':
+          objects.hosts.push(cached_object.host);
       }
     }
   }

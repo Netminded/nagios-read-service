@@ -31,7 +31,7 @@ export function check_type_number_to_enum(
 // #define HOST_UP              STATE_UP
 // #define HOST_DOWN            STATE_DOWN
 // #define HOST_UNREACHABLE     STATE_UNREACHABLE
-export function state_num_to_enum(
+export function service_state_num_to_enum(
   state_num: string
 ): 'state_ok' | 'state_warning' | 'state_critical' | 'state_unknown' {
   switch (state_num) {
@@ -43,6 +43,25 @@ export function state_num_to_enum(
       return 'state_critical';
     default:
       return 'state_unknown';
+  }
+}
+
+// STATE_UP                0
+// STATE_DOWN              1
+// STATE_UNREACHABLE       2
+export function host_state_to_enum(
+  state_num: string
+): 'state_up' | 'state_down' | 'state_unreachable' {
+  switch (state_num) {
+    case '0':
+      return 'state_up';
+    case '1':
+      return 'state_down';
+    case '2':
+      return 'state_unreachable';
+    default:
+      // Shouldn't occur
+      return 'state_unreachable';
   }
 }
 

@@ -6,7 +6,8 @@ import FeedResult from '../feeds/feed_result';
 import map_service_to_transparent_feed from '../feeds/service_status/transparent';
 import Feed from '../feeds/feed';
 import { ExposureMap } from '../exposures/exposures';
-import map_service_to_plugin_ping_feed from '../feeds/service_status/plugins/ping';
+import { host_map_feed_key_function } from '../exposures/host';
+import { map_host_to_status_feed } from '../feeds/host_status/status';
 
 // Maps a nagios status to a bunch of feed results, each result is yielded for
 // a calling function to handle
@@ -21,25 +22,35 @@ export function* map_nagios_status_to_feed(
         // Gets the feeds exposed by the service
         const feeds = feed_map.service_map.get(
           service_map_feed_key_function(service)
-        ) ?? { feeds: [] };
+        );
+        if (feeds === undefined) return;
 
         // Evaluates the feeds for the service
-        for (const feed of feeds.feeds) {
-          let result: FeedResult | null = null;
-          // Uses the corresponding feed function
-          switch (feed.type) {
-            case 'service:transparent':
-              result = map_service_to_transparent_feed(status.status);
-              break;
-            case 'service:diagnostic:is_running':
-              // TODO, Define status -> feed result map
-              break;
-            case 'service:plugin:ping':
-              result = map_service_to_plugin_ping_feed(status.status);
-              break;
-          }
-          // Yields the result, if it is null (likely due to soft state), we ignore the result
-          if (result !== null) yield [feed.feed, result];
+        // Yields the results, if they are null (likely due to soft state), we ignore the result
+        if (feeds.transparent !== undefined) {
+          const result = map_service_to_transparent_feed(service);
+          if (result !== null) yield [feeds.transparent, result];
+        }
+        if (feeds.diagnostic.is_running !== undefined) {
+          // TODO, Define status -> feed result map
+        }
+        if (feeds.plugin.ping !== undefined) {
+          const result = map_service_to_transparent_feed(service);
+          if (result !== null) yield [feeds.plugin.ping, result];
+        }
+      }
+      break;
+    case 'HostStatus':
+      {
+        const host = status.status;
+        // Gets the feeds exposed by the host
+        const feeds = feed_map.host_map.get(host_map_feed_key_function(host));
+        if (feeds === undefined) return;
+
+        // Evaluates the feeds for the host
+        if (feeds.status_feed !== undefined) {
+          const result = map_host_to_status_feed(host);
+          if (result !== null) yield [feeds.status_feed, result];
         }
       }
       break;

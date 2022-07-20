@@ -53,3 +53,11 @@ uuid = "{! API_KEY_UUID !}"
 
 
 [[exposures.hosts]]
+    [exposures.hosts.match]
+    host_name = ".*"
+
+    [exposures.hosts.feeds.status]
+    organisation = { id = 1 }
+    page = { id = 10 }
+    space = { id = 9 }
+    name = "Status of '{{host_name}}'"

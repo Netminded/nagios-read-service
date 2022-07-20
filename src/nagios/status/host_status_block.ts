@@ -2,7 +2,7 @@ import {
   acknowledgement_type_to_enum,
   check_option_to_enum,
   check_type_number_to_enum,
-  state_num_to_enum,
+  host_state_to_enum,
   state_type_to_enum,
 } from './parser_utils';
 
@@ -39,16 +39,8 @@ export default interface HostStatus {
   // #define HOST_UP              STATE_UP
   // #define HOST_DOWN            STATE_DOWN
   // #define HOST_UNREACHABLE     STATE_UNREACHABLE
-  current_state:
-    | 'state_ok'
-    | 'state_warning'
-    | 'state_critical'
-    | 'state_unknown';
-  last_hard_state:
-    | 'state_ok'
-    | 'state_warning'
-    | 'state_critical'
-    | 'state_unknown';
+  current_state: 'state_up' | 'state_down' | 'state_unreachable';
+  last_hard_state: 'state_up' | 'state_down' | 'state_unreachable';
   last_event_id: number;
   current_event_id: number;
   current_problem_id: number;
@@ -167,11 +159,11 @@ export async function parse_host_status(
         line.split('check_type=')[1]
       );
     } else if (line.startsWith('current_state=')) {
-      host_status['current_state'] = state_num_to_enum(
+      host_status['current_state'] = host_state_to_enum(
         line.split('current_state=')[1]
       );
     } else if (line.startsWith('last_hard_state=')) {
-      host_status['last_hard_state'] = state_num_to_enum(
+      host_status['last_hard_state'] = host_state_to_enum(
         line.split('last_hard_state=')[1]
       );
     } else if (line.startsWith('last_event_id=')) {

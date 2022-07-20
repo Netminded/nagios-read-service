@@ -9,11 +9,3 @@ export default interface Feed {
   dependencies: number[];
   custom_data: Record<string, string>;
 }
-
-export type NagiosFeed = {
-  type:
-    | 'service:transparent'
-    | 'service:diagnostic:is_running'
-    | 'service:plugin:ping';
-  feed: Feed;
-};

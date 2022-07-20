@@ -44,7 +44,13 @@ export const service_schema = Joi.object({
   /* custom variables */
   // fcache_customvars(fp, temp_service->custom_variables);
   // fprintf(fp, "\t}\n\n");
-}).unknown(true);
+})
+  .unknown(true)
+  .custom((value, _) => {
+    if (value.display_name === undefined)
+      value.display_name = value.service_description;
+    return value;
+  });
 
 export default interface ServiceDeclaration {
   host_name: string;

@@ -72,8 +72,9 @@ Here is how it is done:
     # Each field can be ommited as well, so if you only want the block to apply to services that have a particular description,
     # then youo can ommit the command field. If all fields are ommited, then this block applies to no services.
     [exposures.services.match]
+    host_name = "<Soome Regex>"  # This regex is checked against the service's `host_name` field
     service_description = "<Some Regex>"  # This regex is checked against the service's `service_description` field
-    command = "<Some Regex>"  # This regex is checked against the service's `check_command` field
+    check_command = "<Some Regex>"  # This regex is checked against the service's `check_command` field
 
     # This block defines the `diagnostic.is_running` feed for all services that are a part of this exposure block
     [exposures.services.feeds.diagnostic.is_running]

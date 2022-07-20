@@ -19,6 +19,7 @@ import { ApiKeys, extract_api_keys } from './dashboard_api/api_key';
 import FeedResult from './feeds/feed_result';
 import Feed from './feeds/feed';
 import { batch_api_upsert } from './dashboard_api/upsert';
+import { map_host_to_feeds } from './exposures/host';
 
 // Gets the config from the config file, handles any errors
 // If this function fails to return Config, then the process should exit
@@ -198,9 +199,12 @@ async function start(config_file_path: string, dry_run: boolean) {
     config,
     nagios_objects.services
   );
-  logger.info({
-    message: `Mapped services to feeds; found ${service_feed_map.size} mappings`,
-  });
+  logger.info(
+    `Mapped services to feeds; found ${service_feed_map.size} mappings`
+  );
+  // Calculates the mapping of hosts to feeds
+  const host_feed_map = await map_host_to_feeds(config, nagios_objects.hosts);
+  logger.info(`Mapped hosts to feeds; found ${host_feed_map.size} mappings`);
 
   // Api Key management
   const api_keys: ApiKeys = extract_api_keys(config);
@@ -213,6 +217,7 @@ async function start(config_file_path: string, dry_run: boolean) {
     nagios_config,
     {
       service_map: service_feed_map,
+      host_map: host_feed_map,
     },
     async (feeds) => {
       await handle_batch_upsert(config, api_keys, dry_run, feeds);

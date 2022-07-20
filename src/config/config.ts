@@ -24,6 +24,24 @@ const cron_validator = (value: string, helpers: Joi.CustomHelpers) => {
   }
 };
 
+const service_feed_schema = {
+  api_key: Joi.string().default('default'),
+  organisation: Joi.object({ id: Joi.number() }).required(),
+  page: Joi.object({ id: Joi.number() }).required(),
+  space: Joi.object({ id: Joi.number() }).required(),
+  // The naming scheme of the transparent feed for these services
+  name: Joi.string().required(),
+  // The description, defaults to the service description
+  description: Joi.string().default('{{ service_description }}'),
+};
+const host_feed_schema = {
+  ...service_feed_schema,
+  // The description, defaults to `'check_command' for 'host_name'`
+  description: Joi.string().default(
+    "'{{ check_command }}' for '{{ host_name }}'"
+  ),
+};
+
 const config_schema = Joi.object({
   nagios_config_file_path: Joi.string()
     .default('/usr/local/nagios/etc/nagios.etc')
@@ -48,62 +66,48 @@ const config_schema = Joi.object({
     .required()
     .with('keys', 'keys.default'),
   exposures: Joi.object({
-    services: Joi.array()
-      .items(
-        Joi.object({
-          // Which services does this feed exposure block apply to?
-          // The match conditions are intersecting (i.e. AND)
-          // If no match is provided, then it is assumed that this applies to no services
-          match: Joi.object({
-            service_description: Joi.string().custom(regex_validator),
-            command: Joi.string().custom(regex_validator),
-          }).required(),
-          // The feeds that all the services of this block expose
-          feeds: Joi.object({
-            // Do these services expose a 'transparent' feed?
-            transparent: Joi.object({
-              api_key: Joi.string().default('default'),
-              organisation: Joi.object({ id: Joi.number() }).required(),
-              page: Joi.object({ id: Joi.number() }).required(),
-              space: Joi.object({ id: Joi.number() }).required(),
-              // The naming scheme of the transparent feed for these services
-              name: Joi.string().required(),
-              // The description, defaults to the service description
-              description: Joi.string().default('{{ service_description }}'),
-            }),
-            diagnostic: Joi.object({
-              // Do these services expose a 'is_running' diagnostic feed?
-              is_running: Joi.object({
-                api_key: Joi.string().default('default'),
-                organisation: Joi.object({ id: Joi.number() }).required(),
-                page: Joi.object({ id: Joi.number() }).required(),
-                space: Joi.object({ id: Joi.number() }).required(),
-                // The naming scheme of the transparent feed for these services
-                name: Joi.string().required(),
-                // The description, defaults to the service description
-                description: Joi.string().default('{{ service_description }}'),
-              }),
-            }),
-            plugin: Joi.object({
-              // Do these services expose a 'ping' plugin feed?
-              ping: Joi.object({
-                api_key: Joi.string().default('default'),
-                organisation: Joi.object({ id: Joi.number() }).required(),
-                page: Joi.object({ id: Joi.number() }).required(),
-                space: Joi.object({ id: Joi.number() }).required(),
-                // The naming scheme of the transparent feed for these services
-                name: Joi.string().required(),
-                // The description, defaults to the service description
-                description: Joi.string().default('{{ service_description }}'),
-              }),
-            }),
-          }).required(),
-        })
-      )
-      .required(),
+    services: Joi.array().items(
+      Joi.object({
+        // Which services does this feed exposure block apply to?
+        // The match conditions are intersecting (i.e. AND)
+        // If no match is provided, then it is assumed that this applies to no services
+        match: Joi.object({
+          host_name: Joi.string().custom(regex_validator),
+          service_description: Joi.string().custom(regex_validator),
+          check_command: Joi.string().custom(regex_validator),
+        }).required(),
+        // The feeds that all the services of this block expose
+        feeds: Joi.object({
+          // Do these services expose a 'transparent' feed?
+          transparent: Joi.object(service_feed_schema),
+          diagnostic: Joi.object({
+            // Do these services expose a 'is_running' diagnostic feed?
+            is_running: Joi.object(service_feed_schema),
+          }),
+          plugin: Joi.object({
+            // Do these services expose a 'ping' plugin feed?
+            ping: Joi.object(service_feed_schema),
+          }),
+        }).required(),
+      })
+    ),
     //
-    hosts: Joi.array().items(Joi.object({})),
-  }).required(),
+    hosts: Joi.array().items(
+      Joi.object({
+        // Which host does this feed exposure block apply to?
+        // The match conditions are intersecting (i.e. AND)
+        // If no match is provided, then it is assumed that this applies to no hosts
+        match: Joi.object({
+          host_name: Joi.string().custom(regex_validator),
+          address: Joi.string().custom(regex_validator),
+          check_command: Joi.string().custom(regex_validator),
+        }).required(),
+        feeds: Joi.object({
+          status: Joi.object(host_feed_schema),
+        }).required(),
+      })
+    ),
+  }),
 });
 
 type ApiKey = {
@@ -116,6 +120,19 @@ type ApiKey = {
   secret_key: string;
   uuid: string;
 };
+
+interface GenericFeed {
+  // The name of the api key to use, defaults to 'default'
+  api_key: string;
+  // Who owns ths feed
+  organisation: { id: number };
+  page: { id: number };
+  space: { id: number };
+  // The naming scheme of the transparent feed for these services
+  name: string;
+  // The description, defaults to the service description
+  description: string;
+}
 
 export default interface Config {
   nagios_config_file_path: string;
@@ -137,63 +154,46 @@ export default interface Config {
   // Defines how services are mapped to feeds
   // i.e. 'Feed Exposure' definitions
   exposures: {
-    services: {
+    services?: {
       // Which services does this feed exposure block apply to?
       // The match conditions are intersecting (i.e. AND)
       // If no match is provided, then it is assumed that this applies to no services
       match: {
+        host_name?: RegExp;
         service_description?: RegExp;
-        command?: RegExp;
+        check_command?: RegExp;
       };
       // The feeds that all the services of this block expose
       feeds: {
         // Do these services expose a 'transparent' feed?
-        transparent?: {
-          // The name of the api key to use, defaults to 'default'
-          api_key: string;
-          // Who owns ths feed
-          organisation: { id: number };
-          page: { id: number };
-          space: { id: number };
-          // The naming scheme of the transparent feed for these services
-          name: string;
-          // The description, defaults to the service description
-          description: string;
-        };
+        transparent?: GenericFeed;
         diagnostic?: {
           // Do these services expose a 'is_running' diagnostic feed?
-          is_running?: {
-            // The name of the api key to use, defaults to 'default'
-            api_key: string;
-            // Who owns ths feed
-            organisation: { id: number };
-            page: { id: number };
-            space: { id: number };
-            // The naming scheme of the is_running diagnostic feed for these services
-            name: string;
-            // The description, defaults to the service description
-            description: string;
-          };
+          is_running?: GenericFeed;
         };
         plugin?: {
           // Do these services expose a 'ping' plugin feed?
-          ping?: {
-            // The name of the api key to use, defaults to 'default'
-            api_key: string;
-            // Who owns ths feed
-            organisation: { id: number };
-            page: { id: number };
-            space: { id: number };
-            // The naming scheme of the ping plugin feed for these services
-            name: string;
-            // The description, defaults to the service description
-            description: string;
-          };
+          ping?: GenericFeed;
         };
       };
     }[];
     //
-    hosts: Record<string, unknown>[];
+    hosts?: {
+      // Which hosts does this feed exposure block apply to?
+      // The match conditions are intersection (i.e. AND)
+      // If no match is provided, then it is assumed that this applies to no hosts
+      match: {
+        host_name?: RegExp;
+        address?: RegExp;
+        check_command?: RegExp;
+      };
+      feeds: {
+        status: GenericFeed & {
+          // The description, defaults to `'check_command' for 'host_name'`
+          description: string;
+        };
+      };
+    }[];
   };
 }
 
