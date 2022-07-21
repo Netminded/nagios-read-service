@@ -24,3 +24,9 @@ export function interpolate_env_string(str: string): string {
     return process.env[env_name.trim()] || ''; // TODO Error if no env var exists
   });
 }
+
+// Replaces escaped curly braces with curly braces, this should be called after any interpolations
+export function unescape_curly_braces(str: string): string {
+  const r = /((?<!\\)\\{)/g;
+  return str.replace(r, '{');
+}

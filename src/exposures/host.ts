@@ -6,7 +6,10 @@ import {
   HostDeclaration,
   UniqueHostId,
 } from '../nagios/object_cache/host_cache';
-import { interpolate_string } from '../utils/interpolation';
+import {
+  interpolate_string,
+  unescape_curly_braces,
+} from '../utils/interpolation';
 import { ExposureMap } from './exposures';
 
 export type HostExposures = Map<
@@ -98,12 +101,13 @@ export function map_host_to_feeds(
           custom_data: {},
           api_key_name: feed.api_key,
           dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
-          description: interpolate_string(
-            feed.description,
-            interpolation_fields
+          description: unescape_curly_braces(
+            interpolate_string(feed.description, interpolation_fields)
           ),
           integration_id: `host::page_${feed.page.id}:space_${feed.space.id}:status::${host.host_name}`,
-          name: interpolate_string(feed.name, interpolation_fields),
+          name: unescape_curly_braces(
+            interpolate_string(feed.name, interpolation_fields)
+          ),
           organisationId: feed.organisation.id,
           pageId: feed.page.id,
           spaceId: feed.space.id,

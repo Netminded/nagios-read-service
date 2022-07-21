@@ -4,7 +4,10 @@ import ServiceDeclaration, {
   get_unique_service_id,
   UniqueServiceId,
 } from '../nagios/object_cache/service_cache';
-import { interpolate_string } from '../utils/interpolation';
+import {
+  interpolate_string,
+  unescape_curly_braces,
+} from '../utils/interpolation';
 import { ExposureMap } from './exposures';
 import { get_unique_host_id } from '../nagios/object_cache/host_cache';
 import { NagiosObjects } from '../nagios/object_cache/parser';
@@ -101,12 +104,13 @@ export function map_services_to_feeds(
           custom_data: {},
           api_key_name: feed.api_key,
           dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
-          description: interpolate_string(
-            feed.description,
-            interpolation_fields
+          description: unescape_curly_braces(
+            interpolate_string(feed.description, interpolation_fields)
           ),
           integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.service_description}@${service.host_name}`,
-          name: interpolate_string(feed.name, interpolation_fields),
+          name: unescape_curly_braces(
+            interpolate_string(feed.name, interpolation_fields)
+          ),
           organisationId: feed.organisation.id,
           pageId: feed.page.id,
           spaceId: feed.space.id,
@@ -119,12 +123,13 @@ export function map_services_to_feeds(
           custom_data: {},
           api_key_name: feed.api_key,
           dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
-          description: interpolate_string(
-            feed.description,
-            interpolation_fields
+          description: unescape_curly_braces(
+            interpolate_string(feed.description, interpolation_fields)
           ),
           integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.service_description}@${service.host_name}`,
-          name: interpolate_string(feed.name, interpolation_fields),
+          name: unescape_curly_braces(
+            interpolate_string(feed.name, interpolation_fields)
+          ),
           organisationId: feed.organisation.id,
           pageId: feed.page.id,
           spaceId: feed.space.id,
@@ -137,12 +142,13 @@ export function map_services_to_feeds(
           custom_data: {},
           api_key_name: feed.api_key,
           dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
-          description: interpolate_string(
-            feed.description,
-            interpolation_fields
+          description: unescape_curly_braces(
+            interpolate_string(feed.description, interpolation_fields)
           ),
           integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.service_description}@${service.host_name}`,
-          name: interpolate_string(feed.name, interpolation_fields),
+          name: unescape_curly_braces(
+            interpolate_string(feed.name, interpolation_fields)
+          ),
           organisationId: feed.organisation.id,
           pageId: feed.page.id,
           spaceId: feed.space.id,
