@@ -1,0 +1,38 @@
+# The default nagios config directory
+nagios_config_file_path = "/usr/local/nagios/etc/nagios.cfg"
+poll_cron = "* * * * *"
+# How many feed results should be batched together before pushing to the dashboard
+batch_size = 50
+
+[api]
+upsert_endpoint="https://api.seethrunetworks.com/api/v3/feed-service/feed/upsert"
+jwt_key_refresh_endpoint="https://api.seethrunetworks.com/api/token"
+
+[api.keys.default]
+type="jwt"
+secret_key="{! AUTH_JWT_SECRET_KEY !}"
+uuid="{! AUTH_JWT_UUID !}"
+
+# Will expose the transparent feed of all services
+[[exposures.services]]
+# This block applies to any services that match the conditions
+[exposures.services.match]
+service_description = ".*"
+
+# Defines the transparant feed for all services that this block found
+[exposures.services.feeds.transparent]
+organisation = { id = TO_COMPLETE }
+space = { id = TO_COMPLETE }
+page = { id = TO_COMPLETE }
+name = "Transparent Feed for '{{service_description}}'"
+
+# Will expose the status feed of all hosts
+[[exposures.hosts]]
+[exposures.hosts.match]
+host_name = ".*"
+
+[exposures.hosts.feeds.status]
+organisation = { id = TO_COMPLETE }
+page = { id = TO_COMPLETE }
+space = { id = TO_COMPLETE }
+name = "Status of '{{host_name}}'"

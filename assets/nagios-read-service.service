@@ -1,1 +1,12 @@
-[unit]
+[Unit]
+Description=Nagios Read Service
+After=network.target
+
+[Service]
+Restart=on-success
+RestartSec=1
+EnvironmentFile=/etc/netminded/nagios-read-service/.env
+ExecStart=/usr/local/bin/nagios-read-service start --config /etc/netminded/nagios-read-service/config.toml
+
+[Install]
+WantedBy=multi-user.target

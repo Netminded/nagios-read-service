@@ -13,7 +13,7 @@ cp -r ./assets /tmp/nagios-build/assets
 cp -r ./dist /tmp/nagios-build/dist
 
 # Packages
-tar -C /tmp/nagios-build -czvf nagios-read-service-v1.0.0-beta.2.tar.gz .
+tar -C /tmp/nagios-build -czvf nagios-read-service-v1.0.0-beta.3.tar.gz .
 
 # Cleanup
-rm -rf /tmp/nagios-dist
+rm -rf /tmp/nagios-build

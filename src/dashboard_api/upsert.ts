@@ -13,6 +13,8 @@ interface UpsertFeed {
   color: 'green' | 'amber' | 'red' | 'default';
   message: string;
   dependencies: string[];
+  // An iso formatted date
+  updatedAt: string;
   custom_data: Record<string, string>;
 }
 
@@ -28,6 +30,7 @@ function feed_upsert_map(feed: Feed, result: FeedResult): UpsertFeed {
     dependencies: feed.dependencies,
     color: result.color,
     message: result.message,
+    updatedAt: result.updated_at.toString(),
     custom_data: {},
   };
 }

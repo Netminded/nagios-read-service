@@ -1,3 +1,5 @@
+#!/usr/bin/node
+
 // Initialises the project-wide logger
 import { logger } from './utils/logger';
 import fs from 'fs';
