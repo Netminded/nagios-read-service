@@ -4,6 +4,8 @@ A read only nagios service which generates feeds from nagios status information
 
 ## Service/Hosts -> Feeds
 
+### Services
+
 Every service defined in a nagios instance can be exposed as 3 feeds:
 
 1.  A 'transparent' feed, which is a simple mapping of
@@ -23,10 +25,14 @@ Every service defined in a nagios instance can be exposed as 3 feeds:
     For each plugin, a specific feed interpretation will have to be designed,
     but once it exists, a service that uses the plugin, can have the respective feed
 
-3.  A 'diagnostic' feed, a simple "Is the service running?" feed
+[//]: # (3.  A 'diagnostic' feed, a simple "Is the service running?" feed)
 
 All services defined in nagios can be exposed as these feeds.
 Which services get exposed gets defined in the config file
+
+### Hosts
+
+Every host can be exposed as a 'status' feed, which is essentially the host 'version' of the service transparent feed. 
 
 ## The config file
 
@@ -36,16 +42,80 @@ at `/etc/netminded/nagios-read-service/config.toml`.
 
 The config file format is toml.
 
+### Interpolation
+
+Some strings support interpolation, that is, dynamic insertion of another string into the string being interpolated.
+
+Not all strings support it, and whey they do, it will be made clear.
+
+#### Regex
+
+Regex interpolation is replacing parts of a string with named values found from a regex match.
+
+Any block of `{{ NAME }}` in a string (that supports Regex interpolation) will be replaced with the 
+regex group named `NAME`, in some places though extra values, not specifically named in the regex, may be available for 
+interpolation
+
+e.g. `Service named '{{ SERVICE_NAME }}' feed'` would interpolate to `Service named 'PING' feed`
+
+#### Env
+
+Env interpolation is replacing parts of a string with values defined in the environment variables.
+
+Any block of `{! ENV_VAR_NAME !}` in a string (that support Env interpolation) will be replaced with the 
+environment variable with the name `ENV_VAR_NAME`.
+
+e.g. `The localisation of the terminal session is {! LC_ALL !}, and the PWD is '{! PWD !}'` 
+would interpolate to `The localisation of the terminal session is en_GB.UTF-8, and the PWD is '/etc/netminded/nagios-read-service'`
+
 ### Global options
 
 - `nagios_config_file_path`: The full path (or relative to the current working directory) to the nagios config file,
-  defaults to `/usr/local/nagios/etc/nagios.etc`.
+  defaults to `/usr/local/nagios/etc/nagios.etc`. 
+  
+  
+**Important** The nagios config file is parsed for the location of both the object cache and status files. 
+This service will then try reading from the files as if they're on the host machine. And so, if nagios is running in 
+a container, then the full path to those files should be mapped to the host machine. i.e. If the files are in 
+`/usr/local/nagios` in the nagios container, then they should be mapped to `/usr/local/nagios` on the host machine.      
+
 - `poll_cron`: The cron determining how often nagios should be polled for the status of objects.
   This has no default, a reasonable rate would be `* * * * *`, i.e. every minute.
-  A useful tool for this is https://crontab.guru/
+  A useful tool to determine the cron is https://crontab.guru/
 - `batch_size`: Feed result upserts (uploads) to the dashboard are batched, i.e. the service will accumulate
   evaluated feeds, and submit them all at once. This parameter determines how many feeds to batch together before upserting.
   This defaults to 25 feeds.
+
+### Api
+
+The service needs to be able to upsert to the dashboard, but by default, it has no knowledge of where to upsert and what
+authentication to use.
+
+To provide these details, you need to provide an `api` table with the following parameters
+
+- `upsert_endpoint`: A string containing the **full** url to the upsert endpoint, as of now, this value should be set
+  to https://api.seethrunetworks.com/api/v3/feed-service/feed/upsert
+- `jwt_key_refresh_endpoint`: If you're using JWT based authentication for the api, the service needs to know where to
+  refresh tokens. This string should contain the **full** url to the JWT token refresh endpoint, as of now, this value 
+  should be set to https://api.seethrunetworks.com/api/token
+
+#### Keys
+
+The apis require authentication to upsert feed results. 
+These authentication mechanisms are abstracted as 'keys' in this service. 
+There can be many keys, which allows different feeds to upsert using different keys.
+
+Each key needs to be named, and a key named 'default' **must** be provided, this is the default key used by feeds.
+
+##### JWT Keys
+
+To define a JWT key, you need to following fields:
+
+- `type = "jwt"`
+- `uuid`: A string containing the uuid, this string supports Env interpolation, 
+   e.g. `{! JWT_KEY_UUID !}` will take the uuid from the environment variables.
+- `secret_key`: A string containing the secret key for the JWT, this string supports Env interpolation,
+   e.g. `{! JWT_KEY_SECRET !}` will take the secret key from the environment variables.
 
 ### Exposure blocks
 
@@ -70,7 +140,7 @@ Here is how it is done:
     # Any service that matches ALL of the following regexes will become a part of this exposure block
     # i.e. Only services that have a service_description that matches the service_description regex becomes a part of this block.
     # Each field can be ommited as well, so if you only want the block to apply to services that have a particular description,
-    # then youo can ommit the command field. If all fields are ommited, then this block applies to no services.
+    # then you can ommit the command field. If all fields are ommited, then this block applies to no services.
     [exposures.services.match]
     host_name = "<Soome Regex>"  # This regex is checked against the service's `host_name` field
     service_description = "<Some Regex>"  # This regex is checked against the service's `service_description` field
@@ -97,6 +167,32 @@ Here is how it is done:
     space = { id = 10 }
     page = { id = 10 }
     name = "Transparent Feed for {{service_description}}"
+
+[[exposures.hosts]]
+    # The 'match' part defines which nagios hosts this exposure block applies to
+    # Any host that matches ALL of the following regexes will become a part of this exposure block
+    # i.e. Only hosts that have a host_name that matches the host_name regex becomes a part of this block.
+    # Each field can be ommited as well, so if you only want the block to apply to hosts that have a particular name,
+    # then you can ommit the command field. If all fields are ommited, then this block applies to no hosts.
+    [exposures.hosts.match]
+    host_name = "<Soome Regex>"  # This regex is checked against the host's `host_name` field
+    address = "<Some Regex>"  # This regex is checked against the host's `address` field
+    check_command = "<Some Regex>"  # This regex is checked against the host's `check_command` field
+
+    # This block defines the `status` feed for all hosts that are a part of this exposure block
+    [exposures.hosts.feeds.status]
+    # Defines where the feed should show up on the dashboard
+    organisation = { id = 1 }
+    page = { id = 10 }
+    space = { id = 9 }
+    # How should the feed be named? As we are defining many feeds at the same time, the name of the feed has a feature
+    # called string interpolation. i.e. The name of this feed for a particular service will be this string but with
+    # all `{{ <field> }}` sections replaced with the value that <field> points to.
+    # By default, <field> can be any of `host_name`. `address`, `check_command`, and `display_name`.
+    # <fiield> can also be a named group from any of the regexes in the match part
+    name = "Status feed for {{ display_name }}"
+    # Similar to name, however this field defaults to '{{ check_command }}' for '{{ host_name }}', and so may be ommitted.
+    message = "{{ check_command }}' for '{{ host_name }}"    
 ```
 
 ### Example
@@ -106,45 +202,65 @@ nagios_config_file_path = "./examples/nagios/nagios.cfg"
 poll_cron = "* * * * *"
 batch_size = 50
 
+[api]
+upsert_endpoint = "https://api.seethrunetworks.com/api/v3/feed/update"
+jwt_key_refresh_endpoint = "https://api.seethrunetworks.com/api/token"
+
+[api.keys.default]
+type = "jwt"
+secret_key = "{! API_KEY_SECRET_KEY !}"
+uuid = "{! API_KEY_UUID !}"
+
 # Will expose the diagnostics feeds of services
 [[exposures.services]]
-    # This block applies to any services that match the conditions
-    [exposures.services.match]
-    service_description = ".*"
+# This block applies to any services that match the conditions
+[exposures.services.match]
+service_description = "(?<service_description>.*)"
 
-    # Defines the diagnostics feed for all services that this block found
-    [exposures.services.feeds.diagnostic.is_running]
-    organisation = { id = 1 }
-    page = { id = 10 }
-    space = { id = 9 }
-    name = "Diagnostic Feed for {{service_description}}"
+# Defines the diagnostics feed for all services that this block found
+[exposures.services.feeds.diagnostic.is_running]
+organisation = { id = 1 }
+page = { id = 10 }
+space = { id = 9 }
+name = "Diagnostic Feed for {{service_description}}"
 
-    # Defines the transparant feed for all services that this block found
-    [exposures.services.feeds.transparent]
-    organisation = { id = 1 }
-    space = { id = 10 }
-    page = { id = 10 }
-    name = "Transparent Feed for {{service_description}}"
+# Defines the transparant feed for all services that this block found
+[exposures.services.feeds.transparent]
+organisation = { id = 1 }
+space = { id = 10 }
+page = { id = 10 }
+name = "Transparent Feed for {{service_description}}"
 
 # Will expose the ping feed for a service with name PING
 [[exposures.services]]
-    [exposures.services.match]
-    # This block applies to any services that is specifically named 'PING'
-    service_description = "PING"
+[exposures.services.match]
+# This block applies to any services that match the conditions
+service_description = "PING"
 
-    # Defines the transparent feed for the service with description 'PING'
-    [exposures.services.feeds.transparent]
-    organisation = { id = 1 }
-    page = { id = 10 }
-    space = { id = 9 }
-    name = "PING (Transparent)"
+# Defines the transparent feed for the service with description 'PING'
+[exposures.services.feeds.transparent]
+organisation = { id = 1 }
+page = { id = 10 }
+space = { id = 9 }
+name = "PING (Transparent)"
 
-    # Defines the ping plugin feed for the service with description 'PING'
-    [exposures.services.feeds.plugin.ping]
-    organisation = { id = 1 }
-    page = { id = 10 }
-    space = { id = 9 }
-    name = "PING"
+# Defines the ping plugin feed for the service with description 'PING'
+[exposures.services.feeds.plugin.ping]
+organisation = { id = 1 }
+page = { id = 10 }
+space = { id = 9 }
+name = "PING"
+
+
+[[exposures.hosts]]
+[exposures.hosts.match]
+host_name = ".*"
+
+[exposures.hosts.feeds.status]
+organisation = { id = 1 }
+page = { id = 10 }
+space = { id = 9 }
+name = "Status of '{{host_name}}'"
 ```
 
 ## Development
@@ -185,21 +301,31 @@ To format the project: `npm run fmt` or `npm run prettier`
 
 ## Production Install
 
-### Download
+### Prerequisites 
 
-1.  You first need to download the latest release, TODO (Link)
-    1. With curl
-    2. With wget
-2.  Unzip the directory
-3.  Once in the directory, you need to install the dependencies `npm install --production`
+ - A nagios instance, where the absolute path to the status and object catch files should
+   be directly available as that path on the host machine
+ - Node18, this should be installed and made available in the path for the root user as `node` *before* installation.
+   To verify this, `sudo node -v` should return a version along the lines of 18.x
 
-At this point, the component is ready to run with `npm run start`.
-However, for running in production, see [Running](#running-1)
+   The version made available in Debian may not be version 18, and so, an alternative way to install it could be through
+   the 'node version manager', `nvm`
 
-## Running
+### Download and Install
 
-### systemd (Preferred)
+An install script has been provided, to run it:
+```shell
+curl -sSL https://github.com/Netminded/nagios-read-service/releases/download/v1.0.0-beta.3/install.sh | sudo bash
+```
 
-### Docker
+After this, you will need to:
 
-### PM2
+1. configure the config file, found at `/etc/netminded/nagios-read-service/config.toml` 
+(the env file is found at `/etc/netminded/nagios-read-service/.env`)
+2. Start the service, `sudo systemctl start nagios-read-service`
+
+### Manage the service
+
+- To start: `sudo systemctl start nagios-read-service`
+- To get the status: `sudo systemctl status nagios-read-service`
+- To get logs: `sudo journalctl --follow -u nagios-read-service`
