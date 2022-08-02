@@ -30,7 +30,7 @@ function feed_upsert_map(feed: Feed, result: FeedResult): UpsertFeed {
     dependencies: [], // feed.dependencies,
     color: result.color,
     message: result.message,
-    updatedAt: result.updated_at.toString(),
+    updatedAt: result.updated_at.toISOString(),
     custom_data: {},
   };
 }
