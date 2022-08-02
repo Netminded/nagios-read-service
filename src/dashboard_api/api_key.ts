@@ -37,10 +37,5 @@ export async function refresh_jwt_token(
     );
   else if (result.status !== 200)
     throw Error(`Api upsert endpoint returned non 200 response`);
-  else if (!result.data.status) {
-    throw Error(
-      `Could not refresh jwt (named: ${name}) from dashboaord, received response: ${result.data.message}`
-    );
-  }
   return result.data.token;
 }

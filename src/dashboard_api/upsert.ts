@@ -27,7 +27,7 @@ function feed_upsert_map(feed: Feed, result: FeedResult): UpsertFeed {
     organisationId: feed.organisationId,
     spaceId: feed.spaceId,
     pageId: feed.pageId,
-    dependencies: feed.dependencies,
+    dependencies: [], // feed.dependencies,
     color: result.color,
     message: result.message,
     updatedAt: result.updated_at.toString(),
@@ -54,7 +54,7 @@ export async function api_upsert(
     feeds: [feed_upsert_map(feed, result)],
   };
 
-  await axios.put(url.toString(), body, config);
+  await axios.post(url.toString(), body, config);
 }
 
 // Batch upserts feeds to the dashboard
@@ -75,7 +75,7 @@ export async function batch_api_upsert(
     feeds: feeds.map(([feed, result]) => feed_upsert_map(feed, result)),
   };
 
-  const response = await axios.put(url.toString(), body, config);
+  const response = await axios.post(url.toString(), body, config);
   logger.debug({
     message: 'Received response from api: ',
     response: response,
