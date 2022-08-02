@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 {
-  LATEST_VERSION="v1.0.0-beta.3"
+  LATEST_VERSION="v1.0.0-beta.4"
   INSTALL_DIR=/opt/netminded/nagios-read-service
 
   # Removes the existing installation
