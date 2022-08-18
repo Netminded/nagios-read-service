@@ -9,17 +9,29 @@ import {
   unescape_curly_braces,
 } from '../utils/interpolation';
 import { ExposureMap } from './exposures';
-import { get_unique_host_id } from '../nagios/object_cache/host_cache';
 import { NagiosObjects } from '../nagios/object_cache/parser';
+import { extract_tags_from_custom_variables } from '../utils/tags';
 
-export type ServiceExposures = Map<
-  UniqueServiceId,
-  {
-    transparent?: Feed;
-    diagnostic: { is_running?: Feed };
-    plugin: { ping?: Feed };
-  }
->;
+// The feeds that a service can have,
+// the same feed type can be defined multiple times, as long as they're for
+// different space, page, and organisations.
+type ServiceFeeds = (
+  | {
+      type: 'transparent';
+      feed: Feed;
+    }
+  | {
+      type: 'diagnostic::is_running';
+      feed: Feed;
+    }
+  | {
+      type: 'plugin::ping';
+      feed: Feed;
+    }
+)[];
+
+// The mapping between services and their feeds
+export type ServiceExposures = Map<UniqueServiceId, ServiceFeeds>;
 
 // Checks if a service matches a Service Match block
 function does_service_match(
@@ -91,71 +103,108 @@ export function map_services_to_feeds(
       };
 
       // Constructs the feeds
-      const service_feeds = {
-        transparent: <Feed | undefined>undefined,
-        diagnostic: { is_running: <Feed | undefined>undefined },
-        plugin: { ping: <Feed | undefined>undefined },
-      };
+      const generated_feeds: ServiceFeeds = [];
 
+      // If the is transparent feed has been defined in the exposure definition
       if (service_exposure_block.feeds.transparent !== undefined) {
         const feed = service_exposure_block.feeds.transparent;
 
-        service_feeds.transparent = {
-          custom_data: {},
-          api_key_name: feed.api_key,
-          dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
-          description: unescape_curly_braces(
-            interpolate_string(feed.description, interpolation_fields)
-          ),
-          integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.service_description}@${service.host_name}`,
-          name: unescape_curly_braces(
-            interpolate_string(feed.name, interpolation_fields)
-          ),
-          organisationId: feed.organisation.id,
-          pageId: feed.page.id,
-          spaceId: feed.space.id,
-        };
+        generated_feeds.push({
+          type: 'transparent',
+          feed: {
+            custom_data: {
+              ...extract_tags_from_custom_variables(service.custom_variables),
+              ...feed.tags,
+            }, // Tags defined in feed declaration take priority
+            api_key_name: feed.api_key,
+            dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
+            description: unescape_curly_braces(
+              interpolate_string(feed.description, interpolation_fields)
+            ),
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:transparent::${service.service_description}@${service.host_name}`,
+            name: unescape_curly_braces(
+              interpolate_string(feed.name, interpolation_fields)
+            ),
+            organisationId: feed.organisation.id,
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
+        });
       }
+      // If the is running diagnostic feed has been defined in the exposure definition
       if (service_exposure_block.feeds.diagnostic?.is_running !== undefined) {
         const feed = service_exposure_block.feeds.diagnostic.is_running;
 
-        service_feeds.diagnostic.is_running = {
-          custom_data: {},
-          api_key_name: feed.api_key,
-          dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
-          description: unescape_curly_braces(
-            interpolate_string(feed.description, interpolation_fields)
-          ),
-          integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.service_description}@${service.host_name}`,
-          name: unescape_curly_braces(
-            interpolate_string(feed.name, interpolation_fields)
-          ),
-          organisationId: feed.organisation.id,
-          pageId: feed.page.id,
-          spaceId: feed.space.id,
-        };
+        generated_feeds.push({
+          type: 'diagnostic::is_running',
+          feed: {
+            custom_data: {
+              ...extract_tags_from_custom_variables(service.custom_variables),
+              ...feed.tags,
+            }, // Tags defined in feed declaration take priority
+            api_key_name: feed.api_key,
+            dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
+            description: unescape_curly_braces(
+              interpolate_string(feed.description, interpolation_fields)
+            ),
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:diagnostic:is_running::${service.service_description}@${service.host_name}`,
+            name: unescape_curly_braces(
+              interpolate_string(feed.name, interpolation_fields)
+            ),
+            organisationId: feed.organisation.id,
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
+        });
       }
+      // If the is ping plugin feed has been defined in the exposure definition
       if (service_exposure_block.feeds.plugin?.ping !== undefined) {
         const feed = service_exposure_block.feeds.plugin.ping;
 
-        service_feeds.plugin.ping = {
-          custom_data: {},
-          api_key_name: feed.api_key,
-          dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
-          description: unescape_curly_braces(
-            interpolate_string(feed.description, interpolation_fields)
-          ),
-          integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.service_description}@${service.host_name}`,
-          name: unescape_curly_braces(
-            interpolate_string(feed.name, interpolation_fields)
-          ),
-          organisationId: feed.organisation.id,
-          pageId: feed.page.id,
-          spaceId: feed.space.id,
-        };
+        generated_feeds.push({
+          type: 'plugin::ping',
+          feed: {
+            custom_data: {
+              ...extract_tags_from_custom_variables(service.custom_variables),
+              ...feed.tags,
+            }, // Tags defined in feed declaration take priority
+            api_key_name: feed.api_key,
+            dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
+            description: unescape_curly_braces(
+              interpolate_string(feed.description, interpolation_fields)
+            ),
+            integration_id: `service::page_${feed.page.id}:space_${feed.space.id}:plugin_ping::${service.service_description}@${service.host_name}`,
+            name: unescape_curly_braces(
+              interpolate_string(feed.name, interpolation_fields)
+            ),
+            organisationId: feed.organisation.id,
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
+        });
       }
-      // Sets up the feeds
-      feed_map.set(get_unique_service_id(service), service_feeds);
+
+      // The service may already have feeds from another host exposure block
+      const unique_service_id = get_unique_service_id(service);
+      const existing_feeds = feed_map.get(unique_service_id);
+      if (existing_feeds === undefined) {
+        feed_map.set(unique_service_id, generated_feeds);
+      } else {
+        // Check if we've redefined an existing feed
+        const new_integration_ids = new Set(
+          generated_feeds.map((feed) => feed.feed.integration_id)
+        );
+        for (const existing of existing_feeds)
+          if (new_integration_ids.has(existing.feed.integration_id))
+            throw Error(
+              `Duplicate service feed defined, integration id is '${existing.feed.integration_id}'`
+            );
+        // If we're here, add the new feeds to the existing feeds
+        feed_map.set(unique_service_id, [
+          ...existing_feeds,
+          ...generated_feeds,
+        ]);
+      }
     }
   }
   return feed_map;
@@ -166,38 +215,38 @@ export function make_service_dependencies(
   objects: NagiosObjects,
   exposure_map: ExposureMap
 ) {
-  // Key is a UniqueServiceId
-  for (const [key, feeds] of exposure_map.service_map) {
-    // Gets this iteration's service
-    const service = objects.services.get(key);
-    if (service === undefined) continue;
-
-    // Gets the service's associated host feeds
-    const host_feeds = exposure_map.host_map.get(get_unique_host_id(service));
-
-    // The integration ids of the dependencies
-    const dependencies: string[] = [];
-    // If the host has any dependencies for the 'status' feed, each feed of this service also depends on them
-    if (host_feeds?.status_feed !== undefined) {
-      dependencies.push(...host_feeds.status_feed.dependencies);
-      dependencies.push(host_feeds.status_feed.integration_id);
-    }
-
-    // If the service has an 'Is Running?' feed, we include it as a dependency
-    // Update the dependencies of each feed
-    if (feeds.transparent !== undefined)
-      feeds.transparent.dependencies = dependencies.concat(
-        feeds.diagnostic.is_running === undefined
-          ? []
-          : feeds.diagnostic.is_running.integration_id
-      );
-    if (feeds.diagnostic.is_running !== undefined)
-      feeds.diagnostic.is_running.dependencies = dependencies;
-    if (feeds.plugin.ping !== undefined)
-      feeds.plugin.ping.dependencies = dependencies.concat(
-        feeds.diagnostic.is_running === undefined
-          ? []
-          : feeds.diagnostic.is_running.integration_id
-      );
-  }
+  // // Key is a UniqueServiceId
+  // for (const [key, feeds] of exposure_map.service_map) {
+  //   // Gets this iteration's service
+  //   const service = objects.services.get(key);
+  //   if (service === undefined) continue;
+  //
+  //   // Gets the service's associated host feeds
+  //   const host_feeds = exposure_map.host_map.get(get_unique_host_id(service));
+  //
+  //   // The integration ids of the dependencies
+  //   const dependencies: string[] = [];
+  //   // If the host has any dependencies for the 'status' feed, each feed of this service also depends on them
+  //   if (host_feeds?.status_feed !== undefined) {
+  //     dependencies.push(...host_feeds.status_feed.dependencies);
+  //     dependencies.push(host_feeds.status_feed.integration_id);
+  //   }
+  //
+  //   // If the service has an 'Is Running?' feed, we include it as a dependency
+  //   // Update the dependencies of each feed
+  //   if (feeds.transparent !== undefined)
+  //     feeds.transparent.dependencies = dependencies.concat(
+  //       feeds.diagnostic.is_running === undefined
+  //         ? []
+  //         : feeds.diagnostic.is_running.integration_id
+  //     );
+  //   if (feeds.diagnostic.is_running !== undefined)
+  //     feeds.diagnostic.is_running.dependencies = dependencies;
+  //   if (feeds.plugin.ping !== undefined)
+  //     feeds.plugin.ping.dependencies = dependencies.concat(
+  //       feeds.diagnostic.is_running === undefined
+  //         ? []
+  //         : feeds.diagnostic.is_running.integration_id
+  //     );
+  // }
 }

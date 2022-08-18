@@ -32,7 +32,7 @@ Which services get exposed gets defined in the config file
 
 ### Hosts
 
-Every host can be exposed as a 'status' feed, which is essentially the host 'version' of the service transparent feed. 
+Every host can be exposed as a 'status' feed, which is essentially the host 'version' of the service transparent feed.
 
 ## The config file
 
@@ -52,8 +52,8 @@ Not all strings support it, and whey they do, it will be made clear.
 
 Regex interpolation is replacing parts of a string with named values found from a regex match.
 
-Any block of `{{ NAME }}` in a string (that supports Regex interpolation) will be replaced with the 
-regex group named `NAME`, in some places though extra values, not specifically named in the regex, may be available for 
+Any block of `{{ NAME }}` in a string (that supports Regex interpolation) will be replaced with the
+regex group named `NAME`, in some places though extra values, not specifically named in the regex, may be available for
 interpolation
 
 e.g. `Service named '{{ SERVICE_NAME }}' feed'` would interpolate to `Service named 'PING' feed`
@@ -62,22 +62,21 @@ e.g. `Service named '{{ SERVICE_NAME }}' feed'` would interpolate to `Service na
 
 Env interpolation is replacing parts of a string with values defined in the environment variables.
 
-Any block of `{! ENV_VAR_NAME !}` in a string (that support Env interpolation) will be replaced with the 
+Any block of `{! ENV_VAR_NAME !}` in a string (that support Env interpolation) will be replaced with the
 environment variable with the name `ENV_VAR_NAME`.
 
-e.g. `The localisation of the terminal session is {! LC_ALL !}, and the PWD is '{! PWD !}'` 
+e.g. `The localisation of the terminal session is {! LC_ALL !}, and the PWD is '{! PWD !}'`
 would interpolate to `The localisation of the terminal session is en_GB.UTF-8, and the PWD is '/etc/netminded/nagios-read-service'`
 
 ### Global options
 
 - `nagios_config_file_path`: The full path (or relative to the current working directory) to the nagios config file,
-  defaults to `/usr/local/nagios/etc/nagios.etc`. 
-  
-  
-**Important** The nagios config file is parsed for the location of both the object cache and status files. 
-This service will then try reading from the files as if they're on the host machine. And so, if nagios is running in 
-a container, then the full path to those files should be mapped to the host machine. i.e. If the files are in 
-`/usr/local/nagios` in the nagios container, then they should be mapped to `/usr/local/nagios` on the host machine.      
+  defaults to `/usr/local/nagios/etc/nagios.etc`.
+
+**Important** The nagios config file is parsed for the location of both the object cache and status files.
+This service will then try reading from the files as if they're on the host machine. And so, if nagios is running in
+a container, then the full path to those files should be mapped to the host machine. i.e. If the files are in
+`/usr/local/nagios` in the nagios container, then they should be mapped to `/usr/local/nagios` on the host machine.
 
 - `poll_cron`: The cron determining how often nagios should be polled for the status of objects.
   This has no default, a reasonable rate would be `* * * * *`, i.e. every minute.
@@ -96,13 +95,13 @@ To provide these details, you need to provide an `api` table with the following 
 - `upsert_endpoint`: A string containing the **full** url to the upsert endpoint, as of now, this value should be set
   to https://api.seethrunetworks.com/api/v3/feed-service/feed/upsert
 - `jwt_key_refresh_endpoint`: If you're using JWT based authentication for the api, the service needs to know where to
-  refresh tokens. This string should contain the **full** url to the JWT token refresh endpoint, as of now, this value 
+  refresh tokens. This string should contain the **full** url to the JWT token refresh endpoint, as of now, this value
   should be set to https://api.seethrunetworks.com/api/token
 
 #### Keys
 
-The apis require authentication to upsert feed results. 
-These authentication mechanisms are abstracted as 'keys' in this service. 
+The apis require authentication to upsert feed results.
+These authentication mechanisms are abstracted as 'keys' in this service.
 There can be many keys, which allows different feeds to upsert using different keys.
 
 Each key needs to be named, and a key named 'default' **must** be provided, this is the default key used by feeds.
@@ -112,10 +111,10 @@ Each key needs to be named, and a key named 'default' **must** be provided, this
 To define a JWT key, you need to following fields:
 
 - `type = "jwt"`
-- `uuid`: A string containing the uuid, this string supports Env interpolation, 
-   e.g. `{! JWT_KEY_UUID !}` will take the uuid from the environment variables.
+- `uuid`: A string containing the uuid, this string supports Env interpolation,
+  e.g. `{! JWT_KEY_UUID !}` will take the uuid from the environment variables.
 - `secret_key`: A string containing the secret key for the JWT, this string supports Env interpolation,
-   e.g. `{! JWT_KEY_SECRET !}` will take the secret key from the environment variables.
+  e.g. `{! JWT_KEY_SECRET !}` will take the secret key from the environment variables.
 
 ### Exposure blocks
 
@@ -192,7 +191,7 @@ Here is how it is done:
     # <fiield> can also be a named group from any of the regexes in the match part
     name = "Status feed for {{ display_name }}"
     # Similar to name, however this field defaults to '{{ check_command }}' for '{{ host_name }}', and so may be ommitted.
-    message = "{{ check_command }}' for '{{ host_name }}"    
+    message = "{{ check_command }}' for '{{ host_name }}"
 ```
 
 ### Example
@@ -263,6 +262,50 @@ space = { id = 9 }
 name = "Status of '{{host_name}}'"
 ```
 
+## Tags
+
+Every feed can have tags, these tags can be defined in both nagios itself and in the config file
+
+### In nagios
+
+All nagios objects support [custom variables](https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/customobjectvars.html).
+To summarise, any variable in the config that starts with '_' is a custom variable, and will show up in the object cache
+
+Any custom variable that starts with `_nmtag_` will become a netmined tag, everything after the `_nmtag_` will be the tag name (be uppercase)
+
+e.g.
+
+The host definition
+
+    define host {
+        use                     linux-server        
+        host_name               localhost
+        alias                   localhost
+        address                 127.0.0.1
+        _nmtag_linux_kernel     5.19
+    }
+
+Will have the tag `LINUX_KERNEL = 5.19`
+
+### In the config file
+
+In the service's config file, when defining a feed, you can provide an extra field containing all the *extra* tags that 
+the feed should have, these tags should be provided as a key value pair
+
+e.g.
+
+    .
+    .
+    .
+    [exposures.hosts.feeds.status]
+    organisation = { id = 1 }
+    page = { id = 10 }
+    space = { id = 9 }
+    name = "Status of '{{host_name}}'"
+    tags = { linux_kernel = "5.19", os = "debian"}
+
+If the same tag has been defined in both nagios and in the config file, the config file tag takes priority
+
 ## Development
 
 This section assumes that you already have a node environment setup
@@ -301,27 +344,28 @@ To format the project: `npm run fmt` or `npm run prettier`
 
 ## Production Install
 
-### Prerequisites 
+### Prerequisites
 
- - A nagios instance, where the absolute path to the status and object catch files should
-   be directly available as that path on the host machine
- - Node18, this should be installed and made available in the path for the root user as `node` *before* installation.
-   To verify this, `sudo node -v` should return a version along the lines of 18.x
+- A nagios instance, where the absolute path to the status and object catch files should
+  be directly available as that path on the host machine
+- Node18, this should be installed and made available in the path for the root user as `node` _before_ installation.
+  To verify this, `sudo node -v` should return a version along the lines of 18.x
 
-   The version made available in Debian may not be version 18, and so, an alternative way to install it could be through
-   the 'node version manager', `nvm`
+  The version made available in Debian may not be version 18, and so, an alternative way to install it could be through
+  the 'node version manager', `nvm`
 
 ### Download and Install
 
 An install script has been provided, to run it:
+
 ```shell
 curl -sSL https://github.com/Netminded/nagios-read-service/releases/download/v1.0.0-beta.4/install.sh | sudo bash
 ```
 
 After this, you will need to:
 
-1. configure the config file, found at `/etc/netminded/nagios-read-service/config.toml` 
-(the env file is found at `/etc/netminded/nagios-read-service/.env`)
+1. configure the config file, found at `/etc/netminded/nagios-read-service/config.toml`
+   (the env file is found at `/etc/netminded/nagios-read-service/.env`)
 2. Start the service, `sudo systemctl start nagios-read-service`
 
 ### Manage the service

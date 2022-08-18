@@ -8,6 +8,7 @@ import { ExposureMap } from '../exposures/exposures';
 import { map_host_to_status_feed } from '../feeds/host_status/status';
 import { get_unique_service_id } from './object_cache/service_cache';
 import { get_unique_host_id } from './object_cache/host_cache';
+import map_service_to_diagnostic_is_running_feed from '../feeds/service_status/diagnostic/is_running';
 
 // Maps a nagios status to a bunch of feed results, each result is yielded for
 // a calling function to handle
@@ -25,16 +26,21 @@ function* map_nagios_status_to_feed(
 
         // Evaluates the feeds for the service
         // Yields the results, if they are null (likely due to soft state), we ignore the result
-        if (feeds.transparent !== undefined) {
-          const result = map_service_to_transparent_feed(service);
-          if (result !== null) yield [feeds.transparent, result];
-        }
-        if (feeds.diagnostic.is_running !== undefined) {
-          // TODO, Define status -> feed result map
-        }
-        if (feeds.plugin.ping !== undefined) {
-          const result = map_service_to_transparent_feed(service);
-          if (result !== null) yield [feeds.plugin.ping, result];
+        for (const feed of feeds) {
+          let result = null;
+          switch (feed.type) {
+            case 'transparent':
+              result = map_service_to_transparent_feed(service);
+              break;
+            case 'diagnostic::is_running':
+              result = map_service_to_diagnostic_is_running_feed(service);
+              break;
+            case 'plugin::ping':
+              result = map_service_to_transparent_feed(service);
+              break;
+          }
+          // Upsert
+          if (result !== null) yield [feed.feed, result];
         }
       }
       break;
@@ -46,9 +52,15 @@ function* map_nagios_status_to_feed(
         if (feeds === undefined) return;
 
         // Evaluates the feeds for the host
-        if (feeds.status_feed !== undefined) {
-          const result = map_host_to_status_feed(host);
-          if (result !== null) yield [feeds.status_feed, result];
+        for (const feed of feeds) {
+          let result = null;
+          switch (feed.type) {
+            case 'status':
+              result = map_host_to_status_feed(host);
+              break;
+          }
+          // Upsert
+          if (result !== null) yield [feed.feed, result];
         }
       }
       break;

@@ -11,13 +11,17 @@ import {
   unescape_curly_braces,
 } from '../utils/interpolation';
 import { ExposureMap } from './exposures';
+import { extract_tags_from_custom_variables } from '../utils/tags';
 
-export type HostExposures = Map<
-  UniqueHostId,
-  {
-    status_feed?: Feed;
-  }
->;
+// The set of feeds that a host can have
+type HostFeeds = {
+  type: 'status';
+  feed: Feed;
+}[];
+
+// The mapping between a host and its feeds,
+// a single host may have multiple of the same feed
+export type HostExposures = Map<UniqueHostId, HostFeeds>;
 
 // Checks if the host matches with the match conditions
 function does_host_match(
@@ -91,29 +95,50 @@ export function map_host_to_feeds(
         interpolation_fields.check_command = host.check_command;
 
       // Maps feeds
-      const host_feeds = {
-        status_feed: <Feed | undefined>undefined,
-      };
+      const host_feeds: HostFeeds = [];
       if (host_exposure.feeds.status !== undefined) {
         const feed = host_exposure.feeds.status;
 
-        host_feeds.status_feed = {
-          custom_data: {},
-          api_key_name: feed.api_key,
-          dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
-          description: unescape_curly_braces(
-            interpolate_string(feed.description, interpolation_fields)
-          ),
-          integration_id: `host::page_${feed.page.id}:space_${feed.space.id}:status::${host.host_name}`,
-          name: unescape_curly_braces(
-            interpolate_string(feed.name, interpolation_fields)
-          ),
-          organisationId: feed.organisation.id,
-          pageId: feed.page.id,
-          spaceId: feed.space.id,
-        };
+        host_feeds.push({
+          type: 'status',
+          feed: {
+            custom_data: {
+              ...extract_tags_from_custom_variables(host.custom_variables),
+              ...feed.tags,
+            }, // Tags defined in feed declaration take priority
+            api_key_name: feed.api_key,
+            dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
+            description: unescape_curly_braces(
+              interpolate_string(feed.description, interpolation_fields)
+            ),
+            integration_id: `host::page_${feed.page.id}:space_${feed.space.id}:status::${host.host_name}`,
+            name: unescape_curly_braces(
+              interpolate_string(feed.name, interpolation_fields)
+            ),
+            organisationId: feed.organisation.id,
+            pageId: feed.page.id,
+            spaceId: feed.space.id,
+          },
+        });
       }
-      feed_map.set(get_unique_host_id(host), host_feeds);
+      // The host may already have feeds from another host exposure block
+      const unique_host_id = get_unique_host_id(host);
+      const existing_feeds = feed_map.get(unique_host_id);
+      if (existing_feeds === undefined) {
+        feed_map.set(unique_host_id, host_feeds);
+      } else {
+        // Check if we've redefined an existing feed
+        const new_integration_ids = new Set(
+          host_feeds.map((feed) => feed.feed.integration_id)
+        );
+        for (const existing of existing_feeds)
+          if (new_integration_ids.has(existing.feed.integration_id))
+            throw Error(
+              `Duplicate host feed defined, integration id is '${existing.feed.integration_id}'`
+            );
+        // If we're here, add the new feeds to the existing feeds
+        feed_map.set(unique_host_id, [...existing_feeds, ...host_feeds]);
+      }
     }
   }
   return feed_map;

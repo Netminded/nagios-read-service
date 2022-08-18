@@ -18,7 +18,7 @@ import { ApiKeys, extract_api_keys } from './dashboard_api/api_key';
 import FeedResult from './feeds/feed_result';
 import Feed from './feeds/feed';
 import { batch_api_upsert } from './dashboard_api/upsert';
-import { map_exposures } from './exposures/exposures';
+import { ExposureMap, map_exposures } from './exposures/exposures';
 import start_refresh_token_job from './jobs/refresh_token';
 import start_poll_job from './jobs/poll_nagios';
 
@@ -102,10 +102,6 @@ async function get_nagios_objects(
     const objects = await collect_nagios_objects(
       fs.createReadStream(nagios_config.object_cache_file, 'utf-8')
     );
-    logger.debug({
-      message: 'Parsed nagios object cache file',
-      objects: objects,
-    });
     logger.info('Successfully parsed the nagios object cache file');
     return objects;
   } catch (e) {
@@ -196,7 +192,16 @@ async function start(config_file_path: string, dry_run: boolean) {
   if (nagios_objects === undefined) return;
 
   // Gets the feeds
-  const feeds = map_exposures(config, nagios_objects);
+  // @ts-ignore -- If it doesn't get defined below, we exit
+  let feeds: ExposureMap;
+  try {
+    feeds = map_exposures(config, nagios_objects);
+  } catch (e) {
+    if (e instanceof Error) {
+      logger.error(`Received error while generating feeds; ${e.message}`);
+    }
+    return;
+  }
   logger.debug({
     message: 'Feed exposures: ',
     service_map: [...feeds.service_map.entries()],

@@ -12,7 +12,10 @@ interface UpsertFeed {
   pageId: number;
   color: 'green' | 'amber' | 'red' | 'default';
   message: string;
-  dependencies: string[];
+  dependencies: {
+    type: 'integration_id';
+    id: string;
+  }[];
   // An iso formatted date
   updatedAt: string;
   custom_data: Record<string, string>;
@@ -27,11 +30,13 @@ function feed_upsert_map(feed: Feed, result: FeedResult): UpsertFeed {
     organisationId: feed.organisationId,
     spaceId: feed.spaceId,
     pageId: feed.pageId,
-    dependencies: [], // feed.dependencies,
+    dependencies: feed.dependencies.map((d) => {
+      return { type: 'integration_id', id: d };
+    }),
     color: result.color,
     message: result.message,
     updatedAt: result.updated_at.toISOString(),
-    custom_data: {},
+    custom_data: feed.custom_data,
   };
 }
 

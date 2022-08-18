@@ -44,10 +44,21 @@ export const host_schema = Joi.object({
   action_url: Joi.string(),
   retain_status_information: Joi.boolean().falsy('0').truthy('1').required(),
   retain_nonstatus_information: Joi.boolean().falsy('0').truthy('1').required(),
+  custom_variables: Joi.object().default({}),
 })
   .unknown(true)
   .custom((value, _) => {
     if (value.display_name === undefined) value.display_name = value.host_name;
+    return value;
+  })
+  .custom((value, _) => {
+    // Handles custom variables
+    for (const [key, v] of Object.entries(value)) {
+      // Custom variables start with '_'
+      if (key.startsWith('_')) {
+        value.custom_variables[key] = v;
+      }
+    }
     return value;
   });
 
@@ -95,6 +106,7 @@ export interface HostDeclaration {
   action_url?: string;
   retain_status_information: boolean;
   retain_nonstatus_information: boolean;
+  custom_variables: Record<string, string>;
 }
 
 // Uniquely identifies the host
