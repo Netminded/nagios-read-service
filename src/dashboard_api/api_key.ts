@@ -1,4 +1,4 @@
-import Config from '../config/config';
+import Config from '../parsers/service/config';
 import axios from 'axios';
 import { interpolate_env_string } from '../utils/interpolation';
 

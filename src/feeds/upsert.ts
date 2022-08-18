@@ -1,4 +1,4 @@
 import Feed from './feed';
-import FeedResult from './feed_result';
+import FeedResult from './result_maps/feed_result';
 
 export type BatchUpsert = (feeds: [Feed, FeedResult][]) => Promise<void>;

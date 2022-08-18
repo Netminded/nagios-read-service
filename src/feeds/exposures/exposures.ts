@@ -1,16 +1,10 @@
-import {
-  make_service_dependencies,
-  map_services_to_feeds,
-  ServiceExposures,
-} from './service';
-import {
-  HostExposures,
-  make_host_dependencies,
-  map_host_to_feeds,
-} from './host';
-import Config from '../config/config';
-import { logger } from '../utils/logger';
-import { NagiosObjects } from '../nagios/object_cache/parser';
+import { map_services_to_feeds, ServiceExposures } from './service/feed_map';
+import { HostExposures, map_host_to_feeds } from './host/feed_map';
+import Config from '../../parsers/service/config';
+import { logger } from '../../utils/logger';
+import { NagiosObjects } from '../../parsers/nagios/object_cache/parser';
+import { make_host_dependencies } from './host/dependencies';
+import { make_service_dependencies } from './service/dependencies';
 
 export type ExposureMap = {
   service_map: ServiceExposures;

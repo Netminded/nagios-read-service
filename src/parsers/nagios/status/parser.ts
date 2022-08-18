@@ -1,12 +1,14 @@
 import { ReadStream } from 'fs';
 import * as readline from 'readline';
 
-import NagiosStatusInfo, { parse_info_block } from './info_block';
-import NagiosProgramStatus from './nagios_status_block';
-import HostStatus, { parse_host_status } from './host_status_block';
-import ServiceStatus, { parse_service_status } from './service_status_block';
+import NagiosStatusInfo, { parse_info_block } from './blocks/info_block';
+import NagiosProgramStatus from './blocks/nagios_status_block';
+import HostStatus, { parse_host_status } from './blocks/host_status_block';
+import ServiceStatus, {
+  parse_service_status,
+} from './blocks/service_status_block';
 
-import { logger } from '../../utils/logger';
+import { logger } from '../../../utils/logger';
 
 export type NagiosStatus =
   | { type: 'Info'; status: NagiosStatusInfo }

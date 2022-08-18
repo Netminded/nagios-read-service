@@ -1,4 +1,4 @@
-import HostStatus from '../../nagios/status/host_status_block';
+import HostStatus from '../../../parsers/nagios/status/blocks/host_status_block';
 import FeedResult from '../feed_result';
 
 export function map_host_to_status_feed(host_status: HostStatus): FeedResult {

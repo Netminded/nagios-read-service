@@ -1,18 +1,16 @@
-// Polls nagios for the latest status information
-import fs from 'fs';
-import { NagiosStatus, parse_nagios_status_file } from './status/parser';
-import FeedResult from '../feeds/feed_result';
-import map_service_to_transparent_feed from '../feeds/service_status/transparent';
-import Feed from '../feeds/feed';
-import { ExposureMap } from '../exposures/exposures';
-import { map_host_to_status_feed } from '../feeds/host_status/status';
-import { get_unique_service_id } from './object_cache/service_cache';
-import { get_unique_host_id } from './object_cache/host_cache';
-import map_service_to_diagnostic_is_running_feed from '../feeds/service_status/diagnostic/is_running';
-
 // Maps a nagios status to a bunch of feed results, each result is yielded for
 // a calling function to handle
-function* map_nagios_status_to_feed(
+import { NagiosStatus } from '../../parsers/nagios/status/parser';
+import { ExposureMap } from '../exposures/exposures';
+import Feed from '../feed';
+import FeedResult from './feed_result';
+import { get_unique_service_id } from '../../parsers/nagios/object_cache/service_cache';
+import map_service_to_transparent_feed from './service_status/transparent';
+import map_service_to_diagnostic_is_running_feed from './service_status/diagnostic/is_running';
+import { get_unique_host_id } from '../../parsers/nagios/object_cache/host_cache';
+import { map_host_to_status_feed } from './host_status/status';
+
+export function* map_nagios_status_to_feed(
   status: NagiosStatus,
   feed_map: ExposureMap
 ): Generator<[Feed, FeedResult]> {
@@ -64,19 +62,5 @@ function* map_nagios_status_to_feed(
         }
       }
       break;
-  }
-}
-
-// A generator which yields feeds and their corresponding results for all
-// status' in the nagios status file
-export async function* poll_nagios_status(
-  nagios_status_path: string,
-  exposure_map: ExposureMap
-): AsyncGenerator<[Feed, FeedResult]> {
-  // We can open a read-only stream as nagios will never overwrite it's contents
-  const stream = fs.createReadStream(nagios_status_path, 'utf-8');
-
-  for await (const status of parse_nagios_status_file(stream)) {
-    if (status !== null) yield* map_nagios_status_to_feed(status, exposure_map);
   }
 }

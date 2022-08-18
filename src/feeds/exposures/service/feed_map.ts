@@ -1,16 +1,15 @@
-import Feed from '../feeds/feed';
-import Config from '../config/config';
+import Feed from '../../feed';
+import Config from '../../../parsers/service/config';
 import ServiceDeclaration, {
   get_unique_service_id,
   UniqueServiceId,
-} from '../nagios/object_cache/service_cache';
+} from '../../../parsers/nagios/object_cache/service_cache';
 import {
   interpolate_string,
   unescape_curly_braces,
-} from '../utils/interpolation';
-import { ExposureMap } from './exposures';
-import { NagiosObjects } from '../nagios/object_cache/parser';
-import { extract_tags_from_custom_variables } from '../utils/tags';
+} from '../../../utils/interpolation';
+import { extract_tags_from_custom_variables } from '../../../utils/tags';
+import { does_service_match } from './match';
 
 // The feeds that a service can have,
 // the same feed type can be defined multiple times, as long as they're for
@@ -32,50 +31,6 @@ type ServiceFeeds = (
 
 // The mapping between services and their feeds
 export type ServiceExposures = Map<UniqueServiceId, ServiceFeeds>;
-
-// Checks if a service matches a Service Match block
-function does_service_match(
-  service: ServiceDeclaration,
-  match: {
-    host_name?: RegExp;
-    service_description?: RegExp;
-    check_command?: RegExp;
-  }
-):
-  | { matches: false }
-  | { matches: true; named_groups: { [key: string]: string } } {
-  // Early exit, as there are no conditions, the service does not match
-  if (
-    match.host_name === undefined &&
-    match.service_description === undefined &&
-    match.check_command === undefined
-  )
-    return { matches: false };
-
-  // Matches against the service
-  const host_groups = match.host_name?.exec(service.host_name);
-  const desc_groups = match.service_description?.exec(
-    service.service_description
-  );
-  const cmd_groups = match.check_command?.exec(service.check_command);
-
-  // If there was no match, exit
-  if (
-    (host_groups === null || host_groups === undefined) &&
-    (desc_groups === null || desc_groups === undefined) &&
-    (cmd_groups === null || cmd_groups === undefined)
-  )
-    return { matches: false };
-
-  return {
-    matches: true,
-    named_groups: {
-      ...host_groups?.groups,
-      ...desc_groups?.groups,
-      ...cmd_groups?.groups,
-    },
-  };
-}
 
 // Figures out which feeds a service should expose
 export function map_services_to_feeds(
@@ -208,45 +163,4 @@ export function map_services_to_feeds(
     }
   }
   return feed_map;
-}
-
-// Calculates the dependencies of all service feeds, and updates them in-place
-export function make_service_dependencies(
-  objects: NagiosObjects,
-  exposure_map: ExposureMap
-) {
-  // // Key is a UniqueServiceId
-  // for (const [key, feeds] of exposure_map.service_map) {
-  //   // Gets this iteration's service
-  //   const service = objects.services.get(key);
-  //   if (service === undefined) continue;
-  //
-  //   // Gets the service's associated host feeds
-  //   const host_feeds = exposure_map.host_map.get(get_unique_host_id(service));
-  //
-  //   // The integration ids of the dependencies
-  //   const dependencies: string[] = [];
-  //   // If the host has any dependencies for the 'status' feed, each feed of this service also depends on them
-  //   if (host_feeds?.status_feed !== undefined) {
-  //     dependencies.push(...host_feeds.status_feed.dependencies);
-  //     dependencies.push(host_feeds.status_feed.integration_id);
-  //   }
-  //
-  //   // If the service has an 'Is Running?' feed, we include it as a dependency
-  //   // Update the dependencies of each feed
-  //   if (feeds.transparent !== undefined)
-  //     feeds.transparent.dependencies = dependencies.concat(
-  //       feeds.diagnostic.is_running === undefined
-  //         ? []
-  //         : feeds.diagnostic.is_running.integration_id
-  //     );
-  //   if (feeds.diagnostic.is_running !== undefined)
-  //     feeds.diagnostic.is_running.dependencies = dependencies;
-  //   if (feeds.plugin.ping !== undefined)
-  //     feeds.plugin.ping.dependencies = dependencies.concat(
-  //       feeds.diagnostic.is_running === undefined
-  //         ? []
-  //         : feeds.diagnostic.is_running.integration_id
-  //     );
-  // }
 }

@@ -4,7 +4,7 @@ import {
   check_type_number_to_enum,
   host_state_to_enum,
   state_type_to_enum,
-} from './parser_utils';
+} from '../utils';
 
 export default interface HostStatus {
   host_name: string;

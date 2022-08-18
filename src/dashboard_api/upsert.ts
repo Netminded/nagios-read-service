@@ -1,5 +1,5 @@
 import Feed from '../feeds/feed';
-import FeedResult from '../feeds/feed_result';
+import FeedResult from '../feeds/result_maps/feed_result';
 import axios from 'axios';
 import { logger } from '../utils/logger';
 

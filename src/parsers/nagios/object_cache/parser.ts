@@ -1,7 +1,7 @@
 // Parses a nagios cache block
 import { ReadStream } from 'fs';
 import readline from 'readline';
-import { logger } from '../../utils/logger';
+import { logger } from '../../../utils/logger';
 import ServiceDeclaration, {
   get_unique_service_id,
   service_schema,

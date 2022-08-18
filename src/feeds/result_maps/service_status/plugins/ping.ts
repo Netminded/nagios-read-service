@@ -1,4 +1,4 @@
-import ServiceStatus from '../../../nagios/status/service_status_block';
+import ServiceStatus from '../../../../parsers/nagios/status/blocks/service_status_block';
 import FeedResult from '../../feed_result';
 
 // Uses the ping map from the Nagios Integration

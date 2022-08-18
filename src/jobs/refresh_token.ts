@@ -1,4 +1,4 @@
-import Config from '../config/config';
+import Config from '../parsers/service/config';
 import { logger } from '../utils/logger';
 import * as schedule from 'node-schedule';
 import { ApiKeys, refresh_jwt_token } from '../dashboard_api/api_key';

@@ -3,22 +3,24 @@
 // Initialises the project-wide logger
 import { logger } from './utils/logger';
 import fs from 'fs';
-import Config, { parse_config_file } from './config/config';
+import Config, { parse_config_file } from './parsers/service/config';
 import { ValidationError } from 'joi';
 
 import {
   collect_nagios_objects,
   NagiosObjects,
-} from './nagios/object_cache/parser';
-import parse_nagios_config_file, { NagiosConfig } from './nagios/config/parser';
+} from './parsers/nagios/object_cache/parser';
+import parse_nagios_config_file, {
+  NagiosConfig,
+} from './parsers/nagios/config';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import path from 'path';
 import { ApiKeys, extract_api_keys } from './dashboard_api/api_key';
-import FeedResult from './feeds/feed_result';
+import FeedResult from './feeds/result_maps/feed_result';
 import Feed from './feeds/feed';
 import { batch_api_upsert } from './dashboard_api/upsert';
-import { ExposureMap, map_exposures } from './exposures/exposures';
+import { ExposureMap, map_exposures } from './feeds/exposures/exposures';
 import start_refresh_token_job from './jobs/refresh_token';
 import start_poll_job from './jobs/poll_nagios';
 

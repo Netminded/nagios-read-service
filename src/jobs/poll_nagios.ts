@@ -1,12 +1,28 @@
 import * as schedule from 'node-schedule';
 import { logger } from '../utils/logger';
-import { poll_nagios_status } from '../nagios/poll_nagios_status';
-import Config from '../config/config';
-import { ExposureMap } from '../exposures/exposures';
-import FeedResult from '../feeds/feed_result';
+import Config from '../parsers/service/config';
+import { ExposureMap } from '../feeds/exposures/exposures';
+import FeedResult from '../feeds/result_maps/feed_result';
 import Feed from '../feeds/feed';
-import { NagiosConfig } from '../nagios/config/parser';
+import { NagiosConfig } from '../parsers/nagios/config';
 import { BatchUpsert } from '../feeds/upsert';
+import fs from 'fs';
+import { parse_nagios_status_file } from '../parsers/nagios/status/parser';
+import { map_nagios_status_to_feed } from '../feeds/result_maps/map_nagios_status';
+
+// A generator which yields feeds and their corresponding results for all
+// status' in the nagios status file
+async function* poll_nagios_status(
+  nagios_status_path: string,
+  exposure_map: ExposureMap
+): AsyncGenerator<[Feed, FeedResult]> {
+  // We can open a read-only stream as nagios will never overwrite it's contents
+  const stream = fs.createReadStream(nagios_status_path, 'utf-8');
+
+  for await (const status of parse_nagios_status_file(stream)) {
+    if (status !== null) yield* map_nagios_status_to_feed(status, exposure_map);
+  }
+}
 
 export default function start_poll_job(
   config: Config,
