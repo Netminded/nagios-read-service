@@ -93,6 +93,6 @@ export async function batch_api_upsert(
     throw Error(`Api upsert endpoint '${url}' does not exist`);
   else if (response.status !== 200)
     throw Error(`Api upsert endpoint returned non 200 response`);
-  else if (!response.data.success)
+  else if (!response.data.status)
     throw Error(`Api upsert failed, with response: ${response.data.message}`);
 }
