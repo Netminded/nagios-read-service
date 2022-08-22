@@ -43,7 +43,7 @@ uuid = "{! API_KEY_UUID !}"
     page = { id = 10 }
     space = { id = 9 }
     name = "PING (Transparent)"
-    tags = { linux_kernel = "5.19" }
+    tags = [ "linux_kernel=5.19" ]
 
     # Defines the ping plugin feed for the service with description 'PING'
     [exposures.services.feeds.plugin.ping]
@@ -62,4 +62,4 @@ uuid = "{! API_KEY_UUID !}"
     page = { id = 10 }
     space = { id = 9 }
     name = "Status of '{{host_name}}'"
-    tags = { linux_kernel = "5.19", os = "debian" }
+    tags = ["linux_kernel=5.19", "os debian", "host={{host_name}}"]

@@ -264,33 +264,48 @@ name = "Status of '{{host_name}}'"
 
 ## Tags
 
-Every feed can have tags, these tags can be defined in both nagios itself and in the config file
+Every feed can have tags, these tags can be defined in both nagios itself and in the config file.
+
+### Note
+
+The dashboard identifies tags by a comma, so the tags `linux_kernel=5.19,os=debian,my,list`, would have a tag list
+of 
+
+ - `linux_kernel=5.19`
+ - `os=debian`
+ - `my`
+ - `list`
+
+And so it is important that you **do not** use commas in tag values
 
 ### In nagios
 
 All nagios objects support [custom variables](https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/customobjectvars.html).
-To summarise, any variable in the config that starts with '_' is a custom variable, and will show up in the object cache
+To summarise, any variable in the config that starts with '\_' is a custom variable, and will show up in the object cache
 
-Any custom variable that starts with `_nmtag_` will become a netmined tag, everything after the `_nmtag_` will be the tag name (be uppercase)
+All custom variables keyed by '_nmtag' will become a netminded tag, you can declare many tags in an object definition,
+by using the same key
 
 e.g.
 
 The host definition
 
     define host {
-        use                     linux-server        
+        use                     linux-server
         host_name               localhost
         alias                   localhost
         address                 127.0.0.1
-        _nmtag_linux_kernel     5.19
+        _nmtag                  linux_kernel=5.19
+        _nmtag                  os debian
     }
 
-Will have the tag `LINUX_KERNEL = 5.19`
+Will have the tags `linux_kernel=5.19`, and `os debian`
 
 ### In the config file
 
-In the service's config file, when defining a feed, you can provide an extra field containing all the *extra* tags that 
-the feed should have, these tags should be provided as a key value pair
+In the service's config file, when defining a feed, you can provide an extra field containing all the _extra_ tags that
+the feed should have, these tags should be provided as a list.
+Also, tag values defined in the config file support interpolation (like you would use for the name or description) 
 
 e.g.
 
@@ -302,7 +317,7 @@ e.g.
     page = { id = 10 }
     space = { id = 9 }
     name = "Status of '{{host_name}}'"
-    tags = { linux_kernel = "5.19", os = "debian"}
+    tags = [ "linux_kernel=5.19", "os=debian", "host={{host_name}}", "{{check_command}}" ]
 
 If the same tag has been defined in both nagios and in the config file, the config file tag takes priority
 

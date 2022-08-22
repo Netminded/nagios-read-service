@@ -24,17 +24,35 @@ export type NagiosObjectDeclaration =
       host: HostDeclaration;
     };
 
+// Parses each key value pair found in a nagios block,
+// if the same key is found multiple times (e.g. _NMTAG), then the value
+// associated will be a list containing all values found in the blocks
 export async function parse_block(
   rl: AsyncIterableIterator<string>
-): Promise<{ [key: string]: string }> {
-  const key_values: { [key: string]: string } = {};
+): Promise<{ [key: string]: string | string[] }> {
+  const key_values: { [key: string]: string | string[] } = {};
   // Manually iterates through the line iterator
   let result = await rl.next();
   while (!result.done && result.value.trim() !== '}') {
     const line = result.value.trim();
 
     const key: string = line.substring(0, line.indexOf('\t'));
-    key_values[key] = line.substring(line.indexOf('\t') + 1);
+    const value: string = line.substring(line.indexOf('\t') + 1);
+
+    // If the key is already in the map, then we convert the entry to a list
+    // and append to it
+    if (key_values.hasOwnProperty(key)) {
+      if (Array.isArray(key_values[key]))
+        key_values[key] = [...key_values[key], value];
+      else {
+        // @ts-ignore -- We know that key_values[key] is a string due to the above check
+        key_values[key] = [key_values[key], value];
+      }
+    }
+    // Otherwise, we just assign the value to the key
+    else {
+      key_values[key] = value;
+    }
 
     result = await rl.next();
   }

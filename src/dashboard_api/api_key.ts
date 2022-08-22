@@ -28,8 +28,8 @@ export async function refresh_jwt_token(
   uuid: string
 ): Promise<string | null> {
   const result = await axios.post(jwt_refresh_token_endpoint, {
-    secret_key: interpolate_env_string(secret_key), // Interpolates the string on demand
-    uuid: interpolate_env_string(uuid), // Interpolates the string on demand
+    secret: interpolate_env_string(secret_key), // Interpolates the string on demand
+    access_token: interpolate_env_string(uuid), // Interpolates the string on demand
   });
   if (result.status === 404)
     throw Error(

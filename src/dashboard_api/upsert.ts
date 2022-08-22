@@ -18,7 +18,9 @@ interface UpsertFeed {
   }[];
   // An iso formatted date
   updatedAt: string;
-  custom_data: Record<string, string>;
+  custom_data: {
+    tags?: string; // The dashboard requires that tags are a comma separated string
+  };
 }
 
 // Maps a feed and feed result into an UpsertFeed (which can be upserted to the dashboard)
@@ -36,7 +38,9 @@ function feed_upsert_map(feed: Feed, result: FeedResult): UpsertFeed {
     color: result.color,
     message: result.message,
     updatedAt: result.updated_at.toISOString(),
-    custom_data: feed.custom_data,
+    custom_data: {
+      tags: feed.custom_data.tags?.join(','),
+    },
   };
 }
 

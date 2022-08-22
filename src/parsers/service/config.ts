@@ -34,7 +34,7 @@ const service_feed_schema = {
   // The description, defaults to the service description
   description: Joi.string().default('{{ service_description }}'),
   // The tags of the feed, these take priority over the feeds defining in nagios
-  tags: Joi.object().default({}),
+  tags: Joi.array().items(Joi.string()).default([]),
 };
 const host_feed_schema = {
   ...service_feed_schema,
@@ -135,7 +135,7 @@ interface GenericFeed {
   // The description, defaults to the service description
   description: string;
   // The tags of the feed, these take priority over the feeds defining in nagios
-  tags: Record<string, string>;
+  tags: string[];
 }
 
 export default interface Config {

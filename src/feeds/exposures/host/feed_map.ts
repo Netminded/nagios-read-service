@@ -57,8 +57,12 @@ export function map_host_to_feeds(
           type: 'status',
           feed: {
             custom_data: {
-              ...extract_tags_from_custom_variables(host.custom_variables),
-              ...feed.tags,
+              tags: [
+                ...extract_tags_from_custom_variables(host.custom_variables),
+                ...feed.tags.map((tag) =>
+                  interpolate_string(tag, interpolation_fields)
+                ),
+              ],
             }, // Tags defined in feed declaration take priority
             api_key_name: feed.api_key,
             dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist

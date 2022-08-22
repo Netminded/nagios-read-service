@@ -68,8 +68,12 @@ export function map_services_to_feeds(
           type: 'transparent',
           feed: {
             custom_data: {
-              ...extract_tags_from_custom_variables(service.custom_variables),
-              ...feed.tags,
+              tags: [
+                ...extract_tags_from_custom_variables(service.custom_variables),
+                ...feed.tags.map((tag) =>
+                  interpolate_string(tag, interpolation_fields)
+                ),
+              ],
             }, // Tags defined in feed declaration take priority
             api_key_name: feed.api_key,
             dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
@@ -94,8 +98,12 @@ export function map_services_to_feeds(
           type: 'diagnostic::is_running',
           feed: {
             custom_data: {
-              ...extract_tags_from_custom_variables(service.custom_variables),
-              ...feed.tags,
+              tags: [
+                ...extract_tags_from_custom_variables(service.custom_variables),
+                ...feed.tags.map((tag) =>
+                  interpolate_string(tag, interpolation_fields)
+                ),
+              ],
             }, // Tags defined in feed declaration take priority
             api_key_name: feed.api_key,
             dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist
@@ -120,8 +128,12 @@ export function map_services_to_feeds(
           type: 'plugin::ping',
           feed: {
             custom_data: {
-              ...extract_tags_from_custom_variables(service.custom_variables),
-              ...feed.tags,
+              tags: [
+                ...extract_tags_from_custom_variables(service.custom_variables),
+                ...feed.tags.map((tag) =>
+                  interpolate_string(tag, interpolation_fields)
+                ),
+              ],
             }, // Tags defined in feed declaration take priority
             api_key_name: feed.api_key,
             dependencies: [], // We complete dependencies at a later stage, once we know about all feeds that exist

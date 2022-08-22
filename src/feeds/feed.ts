@@ -7,5 +7,7 @@ export default interface Feed {
   spaceId: number;
   pageId: number;
   dependencies: string[];
-  custom_data: Record<string, string>;
+  custom_data: {
+    tags?: string[];
+  };
 }
