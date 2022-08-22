@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
 {
-  LATEST_VERSION="v1.0.0-beta.4"
+  LATEST_VERSION="v1.0.1-beta.1"
   INSTALL_DIR=/opt/netminded/nagios-read-service
 
   # Removes the existing installation
   {
     echo "====== Removing existing installation (Config will remain) ======"
+    systemctl stop nagios-read-service.service
     systemctl disable nagios-read-service.service
     rm -rf /usr/local/bin/nagios-read-service
     rm -rf $INSTALL_DIR
