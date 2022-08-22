@@ -59,9 +59,26 @@ const config_schema = Joi.object({
         Joi.string(),
         Joi.object({
           type: Joi.string().pattern(/jwt/).required(),
-          secret_key: Joi.string().required(),
-          uuid: Joi.string().required(),
-        }).required()
+          // Old format
+          secret_key: Joi.string(),
+          uuid: Joi.string(),
+          // New format
+          secret: Joi.string(),
+          access_token: Joi.string(),
+        })
+          .xor('secret_key', 'secret')
+          .xor('uuid', 'access_token')
+          .required()
+          .custom((value, _) => {
+            // Maps the new api key format to the old
+            if (value.secret !== undefined) {
+              value.secret_key = value.secret;
+            }
+            if (value.access_token !== undefined) {
+              value.uuid = value.access_token;
+            }
+            return value;
+          })
       )
       .required(),
   })
@@ -205,6 +222,7 @@ export function parse_config_file(config_string: string): Config {
   const config = toml.parse(config_string);
   const { error, value } = config_schema.validate(config);
   if (error === undefined) {
+    console.log(value.api.keys.default);
     return value;
   } else {
     throw error;

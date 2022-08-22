@@ -111,9 +111,9 @@ Each key needs to be named, and a key named 'default' **must** be provided, this
 To define a JWT key, you need to following fields:
 
 - `type = "jwt"`
-- `uuid`: A string containing the uuid, this string supports Env interpolation,
+- `uuid` or `access_token`: A string containing the uuid (access_token), this string supports Env interpolation,
   e.g. `{! JWT_KEY_UUID !}` will take the uuid from the environment variables.
-- `secret_key`: A string containing the secret key for the JWT, this string supports Env interpolation,
+- `secret_key` or `secret`: A string containing the secret key for the JWT, this string supports Env interpolation,
   e.g. `{! JWT_KEY_SECRET !}` will take the secret key from the environment variables.
 
 ### Exposure blocks
