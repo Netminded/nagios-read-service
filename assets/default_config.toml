@@ -5,13 +5,13 @@ poll_cron = "* * * * *"
 batch_size = 50
 
 [api]
-upsert_endpoint="https://api.seethrunetworks.com/api/v3/feed-service/feed/upsert"
-jwt_key_refresh_endpoint="https://api.seethrunetworks.com/api/token"
+upsert_endpoint = "https://api.seethrunetworks.com/api/v3/feed-service/feed/upsert"
+jwt_key_refresh_endpoint = "https://api.seethrunetworks.com/api/space/token"
 
 [api.keys.default]
 type="jwt"
-secret_key="{! AUTH_JWT_SECRET_KEY !}"
-uuid="{! AUTH_JWT_UUID !}"
+secret="{! AUTH_JWT_SECRET_KEY !}"
+access_token="{! AUTH_JWT_ACCESS_TOKEN !}"
 
 # Will expose the transparent feed of all services
 [[exposures.services]]
@@ -25,6 +25,7 @@ organisation = { id = TO_COMPLETE }
 space = { id = TO_COMPLETE }
 page = { id = TO_COMPLETE }
 name = "Transparent Feed for '{{service_description}}'"
+tags = ["Transparent Feed"]
 
 # Will expose the status feed of all hosts
 [[exposures.hosts]]
