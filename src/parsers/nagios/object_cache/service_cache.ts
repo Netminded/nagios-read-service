@@ -11,7 +11,7 @@ export const service_schema = Joi.object({
   event_handler: Joi.string(),
   notification_period: Joi.string(),
   initial_state: Joi.string().required(), // TODO: Refine
-  importance: Joi.number().required(),
+  importance: Joi.number().optional(), // To support Nagios Core 3.x (it is optional)
   check_interval: Joi.number().required(),
   retry_interval: Joi.number().required(),
   max_check_attempts: Joi.number().required(),
@@ -19,7 +19,7 @@ export const service_schema = Joi.object({
   parallelize_check: Joi.bool().falsy('0').truthy('1').required(),
   active_checks_enabled: Joi.bool().falsy('0').truthy('1').required(),
   passive_checks_enabled: Joi.bool().falsy('0').truthy('1').required(),
-  obsess: Joi.bool().falsy('0').truthy('1').required(),
+  obsess: Joi.bool().falsy('0').truthy('1').optional(), // To support Nagios Core 3.x (it is optional)
   event_handler_enabled: Joi.bool().falsy('0').truthy('1').required(),
   low_flap_threshold: Joi.number().required(),
   high_flap_threshold: Joi.number().required(),

@@ -13,13 +13,13 @@ export const host_schema = Joi.object({
   contact_groups: Joi.string().default(''),
   notification_period: Joi.string(),
   initial_state: Joi.string().regex(/[duo]/).required(),
-  importance: Joi.number().required(),
+  importance: Joi.number().optional(), // To support Nagios Core 3.x (it is optional)
   check_interval: Joi.number().required(),
   retry_interval: Joi.number().required(),
   max_check_attempts: Joi.number().required(),
   active_checks_enabled: Joi.boolean().falsy('0').truthy('1').required(),
   passive_checks_enabled: Joi.boolean().falsy('0').truthy('1').required(),
-  obsess: Joi.boolean().falsy('0').truthy('1').required(),
+  obsess: Joi.boolean().falsy('0').truthy('1').optional(), // To support Nagios Core 3.x (it is optional)
   event_handler_enabled: Joi.boolean().falsy('0').truthy('1').required(),
   low_flap_threshold: Joi.number().required(),
   high_flap_threshold: Joi.number().required(),
