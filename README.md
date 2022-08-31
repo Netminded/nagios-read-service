@@ -374,7 +374,7 @@ To format the project: `npm run fmt` or `npm run prettier`
 An install script has been provided, to run it:
 
 ```shell
-curl -sSL https://github.com/Netminded/nagios-read-service/releases/download/v1.0.1-beta.2/install.sh | sudo bash
+curl -sSL https://github.com/Netminded/nagios-read-service/releases/download/v1.0.2-beta.1/install.sh | sudo bash
 ```
 
 After this, you will need to:
